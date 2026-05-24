@@ -1,5 +1,7 @@
 # AnnaSuraksha v5 — PDS Fraud Intelligence
 
+[![Build and Test](https://github.com/DeepxD-code/AnnaSuraksha/actions/workflows/maven.yml/badge.svg)](https://github.com/DeepxD-code/AnnaSuraksha/actions/workflows/maven.yml)
+
 AnnaSuraksha is a demo-ready prototype of a Public Distribution System (PDS) fraud intelligence
 platform. It provides deterministic fraud scoring, multi-layer ghost detection, supply-chain
 discrepancy detection, real-time SSE alerts, and an explainability layer that integrates with an
