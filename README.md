@@ -87,4 +87,3 @@ Support & next steps
 ---
 
 This summary was generated from the repository code and a short security/productization review.
-If you want me to push this README to the GitHub repo now, confirm and I will commit and push to `main`.
