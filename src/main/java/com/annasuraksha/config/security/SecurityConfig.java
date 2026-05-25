@@ -57,11 +57,15 @@ public class SecurityConfig {
                     "/error"
                 ));
 
-                if (Boolean.parseBoolean(env.getProperty("spring.h2.console.enabled", "false"))) {
-                    publicMatchers.add("/h2-console/**");
-                }
-
+                // H2 console is not public. When enabled in dev, restrict access to admin/dev/gov roles only.
                 auth.requestMatchers(publicMatchers.toArray(new String[0])).permitAll();
+
+                if (Boolean.parseBoolean(env.getProperty("spring.h2.console.enabled", "false"))) {
+                    // Restrict H2 console and the dev landing page to privileged roles so only devs/admins/gov
+                    // officers can access it.
+                    auth.requestMatchers("/h2-console/**").hasAnyRole("ADMIN", "GOVT_OFFICER", "DEV");
+                    auth.requestMatchers("/dev/console").hasAnyRole("ADMIN", "GOVT_OFFICER", "DEV");
+                }
 
                 // Admin only
                 auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
