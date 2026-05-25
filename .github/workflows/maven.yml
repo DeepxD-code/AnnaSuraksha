@@ -34,6 +34,15 @@ jobs:
     - name: Run tests
       run: mvn test
 
+    - name: Publish test results
+      if: always()
+      uses: dorny/test-reporter@v1
+      with:
+        name: Maven Tests
+        path: target/surefire-reports/*.xml
+        reporter: java-junit
+        fail-on-error: false
+
     - name: SpotBugs analysis (best-effort)
       run: mvn com.github.spotbugs:spotbugs-maven-plugin:4.7.4:check
       continue-on-error: true
