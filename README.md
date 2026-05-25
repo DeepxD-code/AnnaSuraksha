@@ -36,6 +36,30 @@ API highlights
 - Alerts: /api/alerts/* (SSE stream, active alerts, acknowledge)
 - Public: /api/stats, /api/transparency/*
 
+Admin API endpoints
+-------------------
+All admin endpoints require `ROLE_ADMIN` and are under `/api/admin/`.
+
+### Ledger (snapshot management)
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/admin/ledger/verify/{id}` | Query a single snapshot's on-chain anchor and compare root hashes |
+| GET | `/api/admin/ledger/verify-all` | Iterate all snapshots and check on-chain anchors for each |
+| POST | `/api/admin/ledger/anchor/{id}` | (Re)anchor an existing snapshot on-chain (retries anchoring) |
+
+### Audit logs
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/admin/audit/recent?pathPrefix=/api/admin/ledger` | Fetch recent audit log entries filtered by path prefix |
+
+### Public ledger endpoints (officers/auditors/admins)
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/ledger/snapshot` | Create a new Merkle snapshot of all beneficiaries |
+| GET | `/api/ledger/snapshot/{id}/proof/{beneficiaryId}` | Get Merkle proof for a beneficiary in a snapshot |
+| GET | `/api/ledger/snapshot/{id}/verify/{beneficiaryId}` | Verify a stored Merkle proof against the snapshot root |
+| GET | `/api/ledger/snapshot/{id}/anchor` | Retrieve snapshot anchor metadata and on-chain anchor record |
+
 Important implementation notes
 - FraudRiskScoringService: deterministic feature extraction and weighted scoring with in-memory
   cache (ConcurrentHashMap). Weights are constants; non-linear floors ensure HIGH scores for
