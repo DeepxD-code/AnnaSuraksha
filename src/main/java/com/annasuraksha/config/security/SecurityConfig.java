@@ -61,10 +61,10 @@ public class SecurityConfig {
                 auth.requestMatchers(publicMatchers.toArray(new String[0])).permitAll();
 
                 if (Boolean.parseBoolean(env.getProperty("spring.h2.console.enabled", "false"))) {
-                    // Restrict H2 console and the dev landing page to privileged roles so only devs/admins/gov
-                    // officers can access it.
-                    auth.requestMatchers("/h2-console/**").hasAnyRole("ADMIN", "GOVT_OFFICER", "DEV");
-                    auth.requestMatchers("/dev/console").hasAnyRole("ADMIN", "GOVT_OFFICER", "DEV");
+                    // H2 console is restricted by H2ConsoleInterceptor (localhost check + audit log).
+                    // No JWT required since the browser page cannot send the Bearer token.
+                    auth.requestMatchers("/h2-console/**").permitAll();
+                    auth.requestMatchers("/dev/console").permitAll();
                 }
 
                 // Admin only

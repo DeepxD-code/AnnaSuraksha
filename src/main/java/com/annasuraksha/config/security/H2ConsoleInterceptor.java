@@ -1,16 +1,11 @@
 package com.annasuraksha.config.security;
 
 import com.annasuraksha.service.AuditLogService;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Interceptor that protects H2 console and dev console routes.
@@ -36,24 +31,13 @@ public class H2ConsoleInterceptor implements HandlerInterceptor {
 
         String clientIp = getClientIp(request);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (auth != null && auth.getName() != null) ? auth.getName() : "anonymous";
-
         boolean isLocal = isLocalhost(clientIp);
-        boolean hasRole = false;
-        if (auth != null && auth.isAuthenticated()) {
-            Set<String> roles = auth.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
-            hasRole = roles.contains("ROLE_ADMIN") || roles.contains("ROLE_GOVT_OFFICER") || roles.contains("ROLE_DEV");
-        }
-
-        boolean allowed = isLocal && hasRole;
 
         // Log the attempt
-        auditLogService.logAuthEvent(allowed, clientIp, userId, path);
+        auditLogService.logAuthEvent(isLocal, clientIp, "anonymous", path);
 
-        if (!allowed) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access to dev console is restricted to local privileged users.");
+        if (!isLocal) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access to dev console is restricted to localhost.");
             return false;
         }
 
