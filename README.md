@@ -130,6 +130,18 @@ Quick dev flow (mint a dev token)
    ```
 
 Remember: never enable H2 or set DEV_BOOTSTRAP_SECRET on shared or production machines.
+
+Local demo helpers
+------------------
+Two helper scripts are included to simplify local demos:
+
+- Bash (Linux/macOS): `scripts/dev-demo.sh`
+  - Usage: `chmod +x scripts/dev-demo.sh && ./scripts/dev-demo.sh [BOOTSTRAP_SECRET] [EMAIL] [PORT]`
+  - Starts the app with H2 enabled, mints a dev token using the provided secret, and prints the token + curl example.
+
+- PowerShell (Windows): `scripts/dev-demo.ps1`
+  - Usage in PowerShell: `.\
+  - Equivalent behavior for Windows developers; writes PID to `.dev_pid` and logs to `dev-app.log`.
 Productization checklist (priority)
 1. Immediate: disable demo seeding by default; remove plaintext demo passwords; require env vars for
    JWT_SECRET and GROQ_API_KEY.
