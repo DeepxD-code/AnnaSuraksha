@@ -15,19 +15,27 @@ plan. Remove demo mode and secrets before any real data deployment.
 Quick facts
 - Server port: 8081 (default)
 - Demo DB: H2 in-memory (jdbc:h2:mem:annasuraksha)
-- H2 console: /h2-console (username: sa, password: <empty>)
-- Demo seeding: enabled by default (15 beneficiaries, 45 FPS deliveries seeded)
+- H2 console: /h2-console (username: sa, password: <empty>) — localhost-only, no JWT required in dev
+- Demo seeding: disabled by default; enable with `--annasuraksha.seed.demo-data=true`
 
 Quick start (demo)
-1. mvn -DskipTests clean package
-2. mvn -DskipTests spring-boot:run
-3. Open http://localhost:8081
+1. Set env vars for reproducible passwords (optional):
+   ```
+   set DEMO_ADMIN_PW=admin123& set DEMO_OFFICER_PW=officer123& set DEMO_AUDIT_PW=audit123& set DEMO_FPS_PW=fps123
+   ```
+2. `mvn -DskipTests clean package`
+3. `java -jar target\annasuraksha-5.0.0.jar --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true`
+4. Open http://localhost:8081
 
-Demo accounts (seeded) — change these before publishing
-- admin@annasuraksha.gov.in / Admin@123 (ROLE_ADMIN)
-- officer@up.gov.in / Officer@123 (ROLE_GOVT_OFFICER)
-- auditor@cag.gov.in / Audit@123 (ROLE_AUDITOR)
-- fps@mh.gov.in / Fps@123 (ROLE_FPS_OPERATOR)
+Demo accounts (seeded with env vars or auto-generated passwords)
+| Email | Default role | Env var |
+|---|---|---|
+| admin@annasuraksha.gov.in | ROLE_ADMIN | DEMO_ADMIN_PW |
+| officer@up.gov.in | ROLE_GOVT_OFFICER | DEMO_OFFICER_PW |
+| auditor@cag.gov.in | ROLE_AUDITOR | DEMO_AUDIT_PW |
+| fps@mh.gov.in | ROLE_FPS_OPERATOR | DEMO_FPS_PW |
+
+Passwords are auto-generated (16-char Base64) if env vars are not set. For reproducible demos, set the env vars before starting the app.
 
 API highlights
 - Fraud scoring endpoints: /api/fraud/* (summary, high-risk, score/{id}, score-all)
@@ -78,7 +86,7 @@ Hard-coded/demo data (must remove for production)
 - application.properties contains placeholders/defaults:
   - groq.api.key=${GROQ_API_KEY:YOUR_GROQ_KEY_HERE}
   - jwt.secret=${JWT_SECRET:ANNASURAKSHA_V5_JWT_SECRET_KEY_32CHARS_MIN}
-  - annasuraksha.seed.demo-data=true
+  - annasuraksha.seed.demo-data=false (enabled via CLI flag for dev)
 
 Security & privacy (short)
 - Do NOT expose H2 console in production.
@@ -90,55 +98,42 @@ Security & privacy (short)
 Enabling H2 locally (safe demo mode)
 -----------------------------------
 If you need the H2 console UX for local demos, enable it only on a developer machine and never in
-production. Recommended approaches:
+production. The H2 console is protected by `H2ConsoleInterceptor` — it only accepts requests from
+localhost (no JWT required, all attempts are audit-logged).
 
 - One-off run (recommended for demos):
   - Linux / macOS:
     ```bash
-    mvn -DskipTests spring-boot:run -Dspring-boot.run.arguments="--spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true"
+    java -jar target/annasuraksha-5.0.0.jar --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
     ```
-  - Windows PowerShell:
+  - Windows (PowerShell):
     ```powershell
-    $env:SPRING_H2_CONSOLE_ENABLED='true'; $env:ANNASURAKSHA_SEED_DEMO='true'; mvn -DskipTests spring-boot:run
+    java -jar target\annasuraksha-5.0.0.jar --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
     ```
 
-- Dev profile (safer): create `src/main/resources/application-dev.properties` and set:
+- Dev profile: create `src/main/resources/application-dev.properties`:
   ```properties
   spring.h2.console.enabled=true
   annasuraksha.seed.demo-data=true
   ```
-  Then run with the dev profile:
-  ```bash
-  mvn -DskipTests spring-boot:run -Dspring-boot.run.profiles=dev
-  ```
+  Then run with `--spring.profiles.active=dev`.
+
+- Helper script (Windows): `.\run-demo.ps1` — starts the app with H2 + demo data + known passwords.
 
 Notes:
-- For reproducible demo credentials, set environment variables before starting the app:
-  - DEMO_ADMIN_PW, DEMO_OFFICER_PW, DEMO_AUDIT_PW, DEMO_FPS_PW
-- The H2 console will be available at: http://localhost:8081/h2-console when enabled. Use JDBC URL
-  `jdbc:h2:mem:annasuraksha`, username `sa`, and empty password (demo only).
-- Always disable the H2 console and demo seeding in staging/production.
+- H2 console: http://localhost:8081/h2-console, JDBC URL `jdbc:h2:mem:annasuraksha`, user `sa`, empty password.
+- Set `DEMO_ADMIN_PW`, `DEMO_OFFICER_PW`, `DEMO_AUDIT_PW`, `DEMO_FPS_PW` env vars for reproducible credentials.
+- Always disable H2 and demo seeding in staging/production.
 
 Quick dev flow (mint a dev token)
---------------------------------
-1. Enable H2 and set a bootstrap secret (only on your dev machine):
-
-   Bash / macOS / Linux:
-
+-------------------------------
+1. Start with H2 enabled (see above) and optionally set a bootstrap secret:
    ```bash
-   export SPRING_H2_CONSOLE_ENABLED=true
    export DEV_BOOTSTRAP_SECRET=verysecret
-   mvn -DskipTests spring-boot:run
+   java -jar target/annasuraksha-5.0.0.jar --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
    ```
 
-   PowerShell:
-
-   ```powershell
-   $env:SPRING_H2_CONSOLE_ENABLED='true'; $env:DEV_BOOTSTRAP_SECRET='verysecret'; mvn -DskipTests spring-boot:run
-   ```
-
-2. Mint a short-lived dev token using the bootstrap secret (no admin token required):
-
+2. Mint a short-lived dev token:
    ```bash
    curl -sS -X POST http://localhost:8081/api/auth/dev-token \
      -H "Content-Type: application/json" \
@@ -146,14 +141,12 @@ Quick dev flow (mint a dev token)
      -d '{"email":"admin@local"}' | jq -r '.data.token'
    ```
 
-3. Use the token to open the dev console or H2 console in your browser by setting an Authorization header
-   in developer tools or using curl to access a protected route:
-
+3. Use the token to access protected routes:
    ```bash
-   curl -H "Authorization: Bearer <TOKEN>" http://localhost:8081/dev/console
+   curl -H "Authorization: Bearer <TOKEN>" http://localhost:8081/api/admin/ledger/verify-all
    ```
 
-Remember: never enable H2 or set DEV_BOOTSTRAP_SECRET on shared or production machines.
+Remember: never enable H2 or DEV_BOOTSTRAP_SECRET on shared or production machines.
 
 Local demo helpers
 ------------------
@@ -164,11 +157,11 @@ Two helper scripts are included to simplify local demos:
   - Starts the app with H2 enabled, mints a dev token using the provided secret, and prints the token + curl example.
 
 - PowerShell (Windows): `scripts/dev-demo.ps1`
-  - Usage in PowerShell: `.\
+  - Usage: `.\scripts\dev-demo.ps1 [BootstrapSecret] [Email] [Port]`
   - Equivalent behavior for Windows developers; writes PID to `.dev_pid` and logs to `dev-app.log`.
 Productization checklist (priority)
-1. Immediate: disable demo seeding by default; remove plaintext demo passwords; require env vars for
-   JWT_SECRET and GROQ_API_KEY.
+1. ✅ Done: demo seeding disabled by default; passwords auto-generated (env var overridable);
+   JWT_SECRET and GROQ_API_KEY use env vars with placeholders.
 2. Short term: replace H2 with Postgres + migrations; unit and integration tests; Redis for caching.
 3. Medium term: move scoring off the main app into a scalable worker/streaming system (Kafka + workers),
    signed ledger snapshots/notarization, SSO for admin console, and full compliance controls.
