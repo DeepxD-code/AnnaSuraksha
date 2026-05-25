@@ -69,6 +69,7 @@ public class SecurityConfig {
 
                 // Admin only
                 auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
+                auth.requestMatchers("/admin/**").hasRole("ADMIN");
                 // Simulation — Admin + Officer
                 auth.requestMatchers("/api/simulate/**").hasAnyRole("ADMIN", "GOVT_OFFICER");
                 // Officer + Admin write operations

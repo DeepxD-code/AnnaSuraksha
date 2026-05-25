@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ledger Admin</title>
+  <style>body{font-family:sans-serif;margin:2em}table{border-collapse:collapse;width:100%}th,td{padding:8px;text-align:left;border:1px solid #ddd}th{background:#f4f4f4}.ok{color:green}.fail{color:red}.warn{color:orange}pre{background:#f9f9f9;padding:8px;overflow:auto}</style>
+</head>
+<body>
+  <h1>Ledger Admin</h1>
+  <p><button onclick="verifyAll()">Verify All vs On-Chain</button></p>
+  <div id="output"><p>Click the button above to run verification.</p></div>
+  <script>
+    async function api(path) {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (!token) { document.getElementById('output').innerHTML = '<p class="fail">No JWT token found. Set token in localStorage or sessionStorage.</p>'; return null; }
+      try {
+        const r = await fetch(path, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (!r.ok) { document.getElementById('output').innerHTML = '<p class="fail">HTTP ' + r.status + ': ' + r.statusText + '</p>'; return null; }
+        return await r.json();
+      } catch(e) { document.getElementById('output').innerHTML = '<p class="fail">Fetch error: ' + e.message + '</p>'; return null; }
+    }
+
+    async function verifyAll() {
+      const data = await api('/api/admin/ledger/verify-all');
+      if (!data) return;
+      let html = '<table><tr><th>ID</th><th>Root</th><th>Anchor Tx</th><th>Anchored At</th><th>Matches On-Chain</th><th>On-Chain</th></tr>';
+      for (const item of (data.data || [])) {
+        const matches = item.matchesOnChain ? '<span class="ok">YES</span>' : '<span class="fail">NO</span>';
+        html += '<tr><td>' + item.snapshotId + '</td><td><code>' + (item.root || '').slice(0, 16) + '…</code></td>'
+             + '<td>' + (item.anchorTxHash || '-') + '</td><td>' + (item.anchoredAt || '-') + '</td>'
+             + '<td>' + matches + '</td><td><pre>' + JSON.stringify(item.onChain || item.onChainError || {}, null, 1) + '</pre></td></tr>';
+      }
+      html += '</table>';
+      document.getElementById('output').innerHTML = html;
+    }
+  </script>
+</body>
+</html>
