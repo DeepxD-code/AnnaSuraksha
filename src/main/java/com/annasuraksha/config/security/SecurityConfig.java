@@ -11,6 +11,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.core.env.Environment;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -18,9 +22,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final Environment env;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter, Environment env) {
         this.jwtFilter = jwtFilter;
+        this.env = env;
     }
 
     @Bean
@@ -33,14 +39,11 @@ public class SecurityConfig {
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public — auth, transparency, static UI, h2, actuator
-                .requestMatchers(
+            .authorizeHttpRequests(auth -> {
+                List<String> publicMatchers = new ArrayList<>(List.of(
                     "/api/auth/**",
                     "/api/transparency/**",
                     "/api/stats",
-                    // H2 console: only allow when explicitly enabled via property
-                    ("/h2-console/**"),
                     "/actuator/health",
                     "/actuator/info",
                     "/",
@@ -52,29 +55,36 @@ public class SecurityConfig {
                     "/images/**",
                     "/favicon.ico",
                     "/error"
-                ).permitAll()
+                ));
+
+                if (Boolean.parseBoolean(env.getProperty("spring.h2.console.enabled", "false"))) {
+                    publicMatchers.add("/h2-console/**");
+                }
+
+                auth.requestMatchers(publicMatchers.toArray(new String[0])).permitAll();
+
                 // Admin only
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
                 // Simulation — Admin + Officer
-                .requestMatchers("/api/simulate/**").hasAnyRole("ADMIN", "GOVT_OFFICER")
+                auth.requestMatchers("/api/simulate/**").hasAnyRole("ADMIN", "GOVT_OFFICER");
                 // Officer + Admin write operations
-                .requestMatchers("/api/beneficiary/register",
-                                 "/api/beneficiary/update/**").hasAnyRole("ADMIN", "GOVT_OFFICER")
+                auth.requestMatchers("/api/beneficiary/register",
+                                     "/api/beneficiary/update/**").hasAnyRole("ADMIN", "GOVT_OFFICER");
                 // FPS supply chain writes
-                .requestMatchers("/api/supply-chain/warehouse-load",
-                                 "/api/supply-chain/dispatch",
-                                 "/api/supply-chain/fps-receive",
-                                 "/api/supply-chain/waypoint").hasAnyRole("ADMIN", "GOVT_OFFICER", "FPS_OPERATOR")
+                auth.requestMatchers("/api/supply-chain/warehouse-load",
+                                     "/api/supply-chain/dispatch",
+                                     "/api/supply-chain/fps-receive",
+                                     "/api/supply-chain/waypoint").hasAnyRole("ADMIN", "GOVT_OFFICER", "FPS_OPERATOR");
                 // Read access — Officer, Auditor, Admin
-                .requestMatchers("/api/fraud/**",
-                                 "/api/predict-risk/**",
-                                 "/api/ledger/**",
-                                 "/api/alerts/**",
-                                 "/api/supply-chain/**",
-                                 "/api/distribution/**",
-                                 "/api/beneficiary/**").hasAnyRole("ADMIN", "GOVT_OFFICER", "AUDITOR")
-                .anyRequest().authenticated()
-            )
+                auth.requestMatchers("/api/fraud/**",
+                                     "/api/predict-risk/**",
+                                     "/api/ledger/**",
+                                     "/api/alerts/**",
+                                     "/api/supply-chain/**",
+                                     "/api/distribution/**",
+                                     "/api/beneficiary/**").hasAnyRole("ADMIN", "GOVT_OFFICER", "AUDITOR");
+                auth.anyRequest().authenticated();
+            })
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             // Allow H2 console in frames for dev
             .headers(h -> h.frameOptions(fo -> fo.sameOrigin()))
