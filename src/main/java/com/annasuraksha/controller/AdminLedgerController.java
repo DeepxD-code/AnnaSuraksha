@@ -6,9 +6,7 @@ import com.annasuraksha.service.MerkleService;
 import com.annasuraksha.service.AuditLogService;
 import com.annasuraksha.service.fabric.FabricQueryService;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -61,5 +59,26 @@ public class AdminLedgerController {
         auditLogService.logAuthEvent(true, clientIp, userId, "/api/admin/ledger/verify-all");
 
         return ApiResponse.success(result, "Verification completed.");
+    }
+
+    @PostMapping("/anchor/{id}")
+    public ApiResponse<Map<String, String>> anchorSnapshot(@PathVariable Long id, HttpServletRequest req, Authentication auth) {
+        try {
+            var meta = merkleService.anchorSnapshotOnChain(id);
+            if (meta == null) return ApiResponse.error("NO_GATEWAY", "No Fabric gateway configured.");
+
+            String clientIp = req.getHeader("X-Forwarded-For");
+            if (clientIp == null || clientIp.isBlank()) clientIp = req.getRemoteAddr();
+            String userId = auth != null ? auth.getName() : "anonymous";
+            auditLogService.logAuthEvent(true, clientIp, userId, "/api/admin/ledger/anchor/" + id);
+
+            return ApiResponse.success(meta, "Snapshot anchored on-chain.");
+        } catch (Exception e) {
+            String clientIp = req.getHeader("X-Forwarded-For");
+            if (clientIp == null || clientIp.isBlank()) clientIp = req.getRemoteAddr();
+            String userId = auth != null ? auth.getName() : "anonymous";
+            auditLogService.logAuthEvent(false, clientIp, userId, "/api/admin/ledger/anchor/" + id);
+            return ApiResponse.error("ANCHOR_FAILED", e.getMessage());
+        }
     }
 }
