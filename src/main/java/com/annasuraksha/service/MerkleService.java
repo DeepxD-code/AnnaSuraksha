@@ -82,6 +82,28 @@ public class MerkleService {
     public Snapshot getSnapshot(Long id) { return snapshotRepo.findById(id).orElse(null); }
     public List<Snapshot> getAllSnapshots() { return snapshotRepo.findAll(); }
 
+    /**
+     * Admin operation: attempt to anchor an existing snapshot on-chain and persist anchor metadata.
+     * Returns the anchor metadata map when successful, or null if no gateway is available.
+     */
+    public java.util.Map<String,String> anchorSnapshotOnChain(Long snapshotId) throws Exception {
+        Snapshot s = getSnapshot(snapshotId);
+        if (s == null) throw new IllegalArgumentException("Snapshot not found: " + snapshotId);
+        if (s.getRoot() == null || s.getRoot().isBlank()) throw new IllegalArgumentException("Snapshot has empty root");
+
+        var ctx = com.annasuraksha.config.ApplicationContextProvider.getApplicationContext();
+        if (ctx == null || !ctx.containsBean("fabricGatewayService")) return null;
+        var fabric = (com.annasuraksha.service.fabric.FabricGatewayService) ctx.getBean("fabricGatewayService");
+        var meta = fabric.anchorSnapshot(String.valueOf(snapshotId), s.getRoot());
+        if (meta != null) {
+            s.setAnchorTxHash(meta.get("txId"));
+            s.setChainName(meta.get("chain"));
+            s.setAnchoredAt(java.time.LocalDateTime.now());
+            snapshotRepo.save(s);
+        }
+        return meta;
+    }
+
     public boolean verifyProof(Long snapshotId, Long beneficiaryId) {
         SnapshotProof sp = getProof(snapshotId, beneficiaryId);
         if (sp == null) return false;
