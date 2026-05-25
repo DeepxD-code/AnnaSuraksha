@@ -27,12 +27,22 @@ public class JwtTokenService {
     }
 
     public String generateToken(String userId, String email, List<String> roles, String stateCode) {
+        return generateToken(userId, email, roles, stateCode, false);
+    }
+
+    /**
+     * Generate a JWT and optionally include an explicit isDev claim. The isDev claim must be
+     * present for developer tokens that should receive DEV privileges (used for local access to
+     * dev-only consoles).
+     */
+    public String generateToken(String userId, String email, List<String> roles, String stateCode, boolean isDev) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
             .subject(userId)
             .claim("email",     email)
             .claim("roles",     roles)
             .claim("stateCode", stateCode)
+            .claim("isDev",     isDev)
             .issuedAt(new Date(now))
             .expiration(new Date(now + (long) expiryMinutes * 60_000L))
             .signWith(key())

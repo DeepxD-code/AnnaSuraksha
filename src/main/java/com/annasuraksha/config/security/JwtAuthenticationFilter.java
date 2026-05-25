@@ -43,10 +43,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     ? roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList())
                     : List.of();
 
-                // Add a convenience DEV role mapping for users who have an employeeId starting with DEV-
-                // This allows local developer accounts to be granted the DEV role without altering stored roles.
-                String employeeId = claims.get("employeeId", String.class);
-                if (employeeId != null && employeeId.startsWith("DEV-")) {
+                // Map explicit isDev JWT claim to ROLE_DEV when present. This is a clearer, auditable
+                // signal than relying on employeeId prefixes.
+                Boolean isDev = claims.get("isDev", Boolean.class);
+                if (Boolean.TRUE.equals(isDev)) {
                     authorities.add(new SimpleGrantedAuthority("ROLE_DEV"));
                 }
 
