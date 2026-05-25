@@ -123,8 +123,10 @@ public class MerkleService {
             String computed = leaf;
             int idx = sp.getLeafIndex() != null ? sp.getLeafIndex() : 0;
             for (String sibling : proof) {
-                if (idx % 2 == 0) computed = sha256(computed + sibling);
-                else computed = sha256(sibling + computed);
+                if (!sibling.isEmpty()) {
+                    if (idx % 2 == 0) computed = sha256(computed + sibling);
+                    else computed = sha256(sibling + computed);
+                }
                 idx = idx / 2;
             }
             return computed.equals(s.getRoot());
@@ -140,6 +142,7 @@ public class MerkleService {
             List<String> levelNodes = tree.get(level);
             int sibling = (idx % 2 == 0) ? idx + 1 : idx - 1;
             if (sibling >= 0 && sibling < levelNodes.size()) proof.add(levelNodes.get(sibling));
+            else proof.add(""); // orphan: no sibling at this level, add empty marker
             idx = idx / 2;
         }
         return proof;

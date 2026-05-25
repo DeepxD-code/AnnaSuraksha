@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -36,11 +37,14 @@ public class DevTokenIntegrationTest {
     }
 
     @Test
-    public void devTokenEndpointForbidsWhenDisabled() throws Exception {
-        // By default tests run with spring.h2.console.enabled=false so the endpoint should return 403
+    public void devTokenEndpointReturnsErrorWhenDisabled() throws Exception {
+        // By default tests run with spring.h2.console.enabled=false so the endpoint should return 200
+        // with success=false and error code "NOT_ALLOWED".
         mvc.perform(post("/api/auth/dev-token")
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"email\":\"admin@local\"}"))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.meta.code").value("NOT_ALLOWED"));
     }
 }

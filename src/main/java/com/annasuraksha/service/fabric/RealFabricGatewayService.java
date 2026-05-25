@@ -1,5 +1,6 @@
 package com.annasuraksha.service.fabric;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -20,6 +21,7 @@ import java.util.Map;
  * so the application will use the MockFabricGatewayService by default unless configured.
  */
 @Service
+@ConditionalOnProperty(name = "fabric.enabled", havingValue = "true")
 public class RealFabricGatewayService implements FabricGatewayService {
 
     private final FabricProperties props;
