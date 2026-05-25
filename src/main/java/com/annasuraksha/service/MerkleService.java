@@ -49,7 +49,7 @@ public class MerkleService {
         for (int idx = 0; idx < leaves.size(); idx++) {
             Long benId = leaves.get(idx).getKey();
             List<String> proof = buildProof(tree, idx);
-            SnapshotProof sp = new SnapshotProof(s.getId(), benId, toJson(proof));
+            SnapshotProof sp = new SnapshotProof(s.getId(), benId, idx, toJson(proof));
             proofRepo.save(sp);
         }
 
@@ -77,6 +77,35 @@ public class MerkleService {
 
     public SnapshotProof getProof(Long snapshotId, Long beneficiaryId) {
         return proofRepo.findBySnapshotIdAndBeneficiaryId(snapshotId, beneficiaryId);
+    }
+
+    public boolean verifyProof(Long snapshotId, Long beneficiaryId) {
+        SnapshotProof sp = getProof(snapshotId, beneficiaryId);
+        if (sp == null) return false;
+        Snapshot s = snapshotRepo.findById(snapshotId).orElse(null);
+        if (s == null) return false;
+
+        // Recompute leaf hash from beneficiary record
+        var benOpt = beneRepo.findById(beneficiaryId);
+        if (benOpt.isEmpty()) return false;
+        Beneficiary b = benOpt.get();
+        String leaf = sha256(b.getBlockHash() == null ? (b.getAadhaarHash() + b.getId()) : b.getBlockHash());
+
+        // Apply proof
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.List<String> proof = om.readValue(sp.getProofJson(), java.util.List.class);
+            String computed = leaf;
+            int idx = sp.getLeafIndex() != null ? sp.getLeafIndex() : 0;
+            for (String sibling : proof) {
+                if (idx % 2 == 0) computed = sha256(computed + sibling);
+                else computed = sha256(sibling + computed);
+                idx = idx / 2;
+            }
+            return computed.equals(s.getRoot());
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private List<String> buildProof(List<List<String>> tree, int leafIndex) {
