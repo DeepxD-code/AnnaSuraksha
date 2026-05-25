@@ -67,13 +67,24 @@ public class DemoDataSeeder implements CommandLineRunner {
 
     private void seedUsers() {
         if (userRepo.count() > 0) return;
+
+        // Passwords are generated at runtime for safety in non-dev environments.
+        // To keep demos reproducible, you may set env vars: DEMO_ADMIN_PW, DEMO_OFFICER_PW, DEMO_AUDIT_PW, DEMO_FPS_PW
+        String adminPw   = System.getenv().getOrDefault("DEMO_ADMIN_PW", randomPassword());
+        String officerPw = System.getenv().getOrDefault("DEMO_OFFICER_PW", randomPassword());
+        String auditPw   = System.getenv().getOrDefault("DEMO_AUDIT_PW", randomPassword());
+        String fpsPw     = System.getenv().getOrDefault("DEMO_FPS_PW", randomPassword());
+
         userRepo.saveAll(List.of(
-            buildUser("admin@annasuraksha.gov.in",   "Admin@123",   List.of("ROLE_ADMIN"),        null,   "System Admin"),
-            buildUser("officer@up.gov.in",           "Officer@123", List.of("ROLE_GOVT_OFFICER"),  "UP",   "UP District Officer"),
-            buildUser("auditor@cag.gov.in",          "Audit@123",   List.of("ROLE_AUDITOR"),        null,   "CAG Auditor"),
-            buildUser("fps@mh.gov.in",               "Fps@123",     List.of("ROLE_FPS_OPERATOR"),   "MH",   "MH FPS Operator")
+            buildUser("admin@annasuraksha.gov.in",   adminPw,   List.of("ROLE_ADMIN"),        null,   "System Admin"),
+            buildUser("officer@up.gov.in",           officerPw, List.of("ROLE_GOVT_OFFICER"),  "UP",   "UP District Officer"),
+            buildUser("auditor@cag.gov.in",          auditPw,   List.of("ROLE_AUDITOR"),        null,   "CAG Auditor"),
+            buildUser("fps@mh.gov.in",               fpsPw,     List.of("ROLE_FPS_OPERATOR"),   "MH",   "MH FPS Operator")
         ));
-        log.info("Demo users created — login with admin@annasuraksha.gov.in / Admin@123");
+
+        log.info("Demo users created — admin:{}, officer:{}, auditor:{}, fps:{}",
+            "admin@annasuraksha.gov.in", "officer@up.gov.in", "auditor@cag.gov.in", "fps@mh.gov.in");
+        log.warn("Demo passwords generated. For reproducible demos set DEMO_ADMIN_PW / DEMO_OFFICER_PW / DEMO_AUDIT_PW / DEMO_FPS_PW env vars.");
     }
 
     private void seedBeneficiariesAndDeliveries() {
@@ -159,6 +170,13 @@ public class DemoDataSeeder implements CommandLineRunner {
             .email(email).passwordHash(passwordEncoder.encode(password))
             .roles(roles).stateCode(stateCode).fullName(fullName)
             .active(true).build();
+    }
+
+    private String randomPassword() {
+        var rng = new java.security.SecureRandom();
+        var bytes = new byte[12];
+        rng.nextBytes(bytes);
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DemoDataSeeder.class);
     public DemoDataSeeder(BeneficiaryRepository beneRepo, FpsDeliveryRepository fpsRepo, UserRepository userRepo,
