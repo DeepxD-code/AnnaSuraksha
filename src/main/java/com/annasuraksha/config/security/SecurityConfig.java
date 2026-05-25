@@ -39,7 +39,8 @@ public class SecurityConfig {
                     "/api/auth/**",
                     "/api/transparency/**",
                     "/api/stats",
-                    "/h2-console/**",
+                    // H2 console: only allow when explicitly enabled via property
+                    ("/h2-console/**"),
                     "/actuator/health",
                     "/actuator/info",
                     "/",
