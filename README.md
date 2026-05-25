@@ -94,6 +94,42 @@ Notes:
 - The H2 console will be available at: http://localhost:8081/h2-console when enabled. Use JDBC URL
   `jdbc:h2:mem:annasuraksha`, username `sa`, and empty password (demo only).
 - Always disable the H2 console and demo seeding in staging/production.
+
+Quick dev flow (mint a dev token)
+--------------------------------
+1. Enable H2 and set a bootstrap secret (only on your dev machine):
+
+   Bash / macOS / Linux:
+
+   ```bash
+   export SPRING_H2_CONSOLE_ENABLED=true
+   export DEV_BOOTSTRAP_SECRET=verysecret
+   mvn -DskipTests spring-boot:run
+   ```
+
+   PowerShell:
+
+   ```powershell
+   $env:SPRING_H2_CONSOLE_ENABLED='true'; $env:DEV_BOOTSTRAP_SECRET='verysecret'; mvn -DskipTests spring-boot:run
+   ```
+
+2. Mint a short-lived dev token using the bootstrap secret (no admin token required):
+
+   ```bash
+   curl -sS -X POST http://localhost:8081/api/auth/dev-token \
+     -H "Content-Type: application/json" \
+     -H "X-BOOTSTRAP-SECRET: verysecret" \
+     -d '{"email":"admin@local"}' | jq -r '.data.token'
+   ```
+
+3. Use the token to open the dev console or H2 console in your browser by setting an Authorization header
+   in developer tools or using curl to access a protected route:
+
+   ```bash
+   curl -H "Authorization: Bearer <TOKEN>" http://localhost:8081/dev/console
+   ```
+
+Remember: never enable H2 or set DEV_BOOTSTRAP_SECRET on shared or production machines.
 Productization checklist (priority)
 1. Immediate: disable demo seeding by default; remove plaintext demo passwords; require env vars for
    JWT_SECRET and GROQ_API_KEY.
