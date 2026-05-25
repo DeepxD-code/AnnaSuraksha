@@ -53,6 +53,25 @@ public class MerkleService {
             proofRepo.save(sp);
         }
 
+        // Attempt to anchor snapshot on-chain via FabricGatewayService if available (best-effort).
+        try {
+            // Resolve bean lazily to avoid hard dependency in unit tests/environments without Fabric
+            var ctx = org.springframework.context.ApplicationContextProvider.getApplicationContext();
+            if (ctx != null && ctx.containsBean("fabricGatewayService")) {
+                var fabric = (com.annasuraksha.service.fabric.FabricGatewayService) ctx.getBean("fabricGatewayService");
+                var meta = fabric.anchorSnapshot(String.valueOf(s.getId()), root);
+                if (meta != null) {
+                    s.setAnchorTxHash(meta.get("txId"));
+                    s.setChainName(meta.get("chain"));
+                    s.setAnchoredAt(java.time.LocalDateTime.now());
+                    snapshotRepo.save(s);
+                }
+            }
+        } catch (Exception e) {
+            // Anchor failures should not block snapshot creation
+            java.util.logging.Logger.getLogger(MerkleService.class.getName()).warning("Fabric anchor failed: " + e.getMessage());
+        }
+
         return s;
     }
 

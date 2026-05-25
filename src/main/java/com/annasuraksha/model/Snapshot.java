@@ -10,9 +10,22 @@ public class Snapshot {
     private Long id;
     private String root;
     private LocalDateTime createdAt;
+    private String anchorTxHash;
+    private String chainName;
+    private LocalDateTime anchoredAt;
 
     public Snapshot() {}
     public Snapshot(String root) { this.root = root; this.createdAt = LocalDateTime.now(); }
+
+    // Anchor metadata setters/getters
+    public String getAnchorTxHash() { return anchorTxHash; }
+    public void setAnchorTxHash(String anchorTxHash) { this.anchorTxHash = anchorTxHash; }
+
+    public String getChainName() { return chainName; }
+    public void setChainName(String chainName) { this.chainName = chainName; }
+
+    public LocalDateTime getAnchoredAt() { return anchoredAt; }
+    public void setAnchoredAt(LocalDateTime anchoredAt) { this.anchoredAt = anchoredAt; }
 
     public Long getId() { return id; }
     public String getRoot() { return root; }
