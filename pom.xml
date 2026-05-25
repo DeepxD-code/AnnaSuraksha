@@ -77,6 +77,21 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Hyperledger Fabric Gateway SDK -->
+        <!-- Hyperledger Fabric Gateway SDK
+             Note: the official artifacts may not be available on Maven Central. If your environment
+             has a private repo (Artifactory/Nexus) with the fabric-gateway artifacts, configure it in
+             settings.xml. For local dev without the artifact, use the mock implementation which is
+             provided in this project. The dependency is optional and can be uncommented when available.
+        -->
+        <!--
+        <dependency>
+            <groupId>org.hyperledger.fabric-gateway</groupId>
+            <artifactId>fabric-gateway</artifactId>
+            <version>1.4.6</version>
+        </dependency>
+        -->
+
         <!-- Observability -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
