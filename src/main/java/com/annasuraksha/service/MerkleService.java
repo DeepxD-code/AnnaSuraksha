@@ -80,6 +80,7 @@ public class MerkleService {
     }
 
     public Snapshot getSnapshot(Long id) { return snapshotRepo.findById(id).orElse(null); }
+    public List<Snapshot> getAllSnapshots() { return snapshotRepo.findAll(); }
 
     public boolean verifyProof(Long snapshotId, Long beneficiaryId) {
         SnapshotProof sp = getProof(snapshotId, beneficiaryId);
