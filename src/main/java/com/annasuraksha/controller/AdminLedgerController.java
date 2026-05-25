@@ -28,6 +28,36 @@ public class AdminLedgerController {
         this.auditLogService = auditLogService;
     }
 
+    @GetMapping("/verify/{id}")
+    public ApiResponse<Map<String, Object>> verifySingle(@PathVariable Long id, HttpServletRequest req, Authentication auth) {
+        Map<String, Object> item = new HashMap<>();
+        Snapshot s = merkleService.getSnapshot(id);
+        if (s == null) return ApiResponse.error("NOT_FOUND", "Snapshot not found.");
+
+        item.put("snapshotId", s.getId());
+        item.put("root", s.getRoot());
+        item.put("anchoredAt", s.getAnchoredAt());
+        item.put("anchorTxHash", s.getAnchorTxHash());
+        try {
+            var onChain = fabricQueryService.queryAnchor(String.valueOf(s.getId()));
+            item.put("onChain", onChain);
+            boolean matches = false;
+            if (onChain != null && onChain.get("merkleRoot") != null) {
+                matches = s.getRoot() != null && s.getRoot().equals(onChain.get("merkleRoot"));
+            }
+            item.put("matchesOnChain", matches);
+        } catch (Exception e) {
+            item.put("onChainError", e.getMessage());
+        }
+
+        String clientIp = req.getHeader("X-Forwarded-For");
+        if (clientIp == null || clientIp.isBlank()) clientIp = req.getRemoteAddr();
+        String userId = auth != null ? auth.getName() : "anonymous";
+        auditLogService.logAuthEvent(true, clientIp, userId, "/api/admin/ledger/verify/" + id);
+
+        return ApiResponse.success(item, "Verification completed.");
+    }
+
     @GetMapping("/verify-all")
     public ApiResponse<List<Map<String, Object>>> verifyAll(HttpServletRequest req, Authentication auth) {
         List<Map<String, Object>> result = new ArrayList<>();
