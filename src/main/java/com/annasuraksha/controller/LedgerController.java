@@ -5,14 +5,18 @@ import com.annasuraksha.model.SnapshotProof;
 import com.annasuraksha.model.api.ApiResponse;
 import com.annasuraksha.service.MerkleService;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ledger")
 public class LedgerController {
 
     private final MerkleService merkleService;
+    private final com.annasuraksha.service.fabric.FabricQueryService fabricQueryService;
 
-    public LedgerController(MerkleService merkleService) { this.merkleService = merkleService; }
+    public LedgerController(MerkleService merkleService, com.annasuraksha.service.fabric.FabricQueryService fabricQueryService) {
+        this.merkleService = merkleService; this.fabricQueryService = fabricQueryService;
+    }
 
     @PostMapping("/snapshot")
     public ApiResponse<Snapshot> createSnapshot() {
@@ -32,5 +36,27 @@ public class LedgerController {
         boolean ok = merkleService.verifyProof(id, beneficiaryId);
         return ok ? ApiResponse.success(Map.of("verified", true), "Proof verified.")
                   : ApiResponse.error("VERIFY_FAILED", "Proof mismatch or snapshot not found.");
+    }
+
+    @GetMapping("/snapshot/{id}/anchor")
+    public ApiResponse<Map<String, Object>> getAnchor(@PathVariable Long id) {
+        Snapshot s = merkleService.getSnapshot(id);
+        if (s == null) return ApiResponse.error("NOT_FOUND", "Snapshot not found.");
+
+        Map<String, Object> out = new java.util.HashMap<>();
+        out.put("snapshotId", s.getId());
+        out.put("root", s.getRoot());
+        out.put("createdAt", s.getCreatedAt());
+        out.put("anchoredAt", s.getAnchoredAt());
+        out.put("anchorTxHash", s.getAnchorTxHash());
+
+        try {
+            var onChain = fabricQueryService.queryAnchor(String.valueOf(id));
+            out.put("onChain", onChain);
+        } catch (Exception e) {
+            out.put("onChainError", e.getMessage());
+        }
+
+        return ApiResponse.success(out, "Anchor metadata.");
     }
 }

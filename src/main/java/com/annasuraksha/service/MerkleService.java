@@ -56,7 +56,7 @@ public class MerkleService {
         // Attempt to anchor snapshot on-chain via FabricGatewayService if available (best-effort).
         try {
             // Resolve bean lazily to avoid hard dependency in unit tests/environments without Fabric
-            var ctx = org.springframework.context.ApplicationContextProvider.getApplicationContext();
+            var ctx = com.annasuraksha.config.ApplicationContextProvider.getApplicationContext();
             if (ctx != null && ctx.containsBean("fabricGatewayService")) {
                 var fabric = (com.annasuraksha.service.fabric.FabricGatewayService) ctx.getBean("fabricGatewayService");
                 var meta = fabric.anchorSnapshot(String.valueOf(s.getId()), root);
@@ -78,6 +78,8 @@ public class MerkleService {
     public SnapshotProof getProof(Long snapshotId, Long beneficiaryId) {
         return proofRepo.findBySnapshotIdAndBeneficiaryId(snapshotId, beneficiaryId);
     }
+
+    public Snapshot getSnapshot(Long id) { return snapshotRepo.findById(id).orElse(null); }
 
     public boolean verifyProof(Long snapshotId, Long beneficiaryId) {
         SnapshotProof sp = getProof(snapshotId, beneficiaryId);

@@ -50,6 +50,14 @@ public class BeneficiaryContract implements ContractInterface {
         return key;
     }
 
+    @Transaction()
+    public String queryAnchor(Context ctx, String snapshotId) {
+        ChaincodeStub stub = ctx.getStub();
+        String key = "anchor_" + snapshotId;
+        String val = stub.getStringState(key);
+        return val == null ? "" : val;
+    }
+
     private String sha256(String input) {
         try {
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");

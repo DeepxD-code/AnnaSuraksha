@@ -101,5 +101,67 @@ public class RealFabricGatewayService implements FabricGatewayService {
         } catch (ClassNotFoundException cnf) {
             throw new IllegalStateException("Fabric Gateway SDK not available on classpath. Add the dependency or use the mock implementation.", cnf);
         }
+        
+    }
+
+    @Override
+    public Map<String, String> queryAnchor(String snapshotId) throws Exception {
+        if (!props.isEnabled()) return null;
+
+        if (!StringUtils.hasText(props.getConnectionProfile()) || !StringUtils.hasText(props.getIdentity()) || !StringUtils.hasText(props.getWalletPath())) {
+            throw new IllegalStateException("Fabric properties not configured: connectionProfile, walletPath and identity required");
+        }
+
+        Path walletPath = Paths.get(props.getWalletPath());
+        Path networkConfigPath = Paths.get(props.getConnectionProfile());
+
+        try {
+            Class<?> WalletsClass = Class.forName("org.hyperledger.fabric.gateway.Wallets");
+            Class<?> WalletClass = Class.forName("org.hyperledger.fabric.gateway.Wallet");
+            Class<?> GatewayClass = Class.forName("org.hyperledger.fabric.gateway.Gateway");
+
+            java.lang.reflect.Method newFileSystemWallet = WalletsClass.getMethod("newFileSystemWallet", Path.class);
+            Object wallet = newFileSystemWallet.invoke(null, walletPath);
+
+            java.lang.reflect.Method walletGet = WalletClass.getMethod("get", String.class);
+            Object identityEntry = walletGet.invoke(wallet, props.getIdentity());
+            if (identityEntry == null) {
+                throw new IllegalStateException("Identity not found in wallet: " + props.getIdentity());
+            }
+
+            java.lang.reflect.Method createBuilder = GatewayClass.getMethod("createBuilder");
+            Object builder = createBuilder.invoke(null);
+
+            java.lang.reflect.Method identityMethod = builder.getClass().getMethod("identity", WalletClass, String.class);
+            Object withIdentity = identityMethod.invoke(builder, wallet, props.getIdentity());
+            java.lang.reflect.Method networkConfigMethod = withIdentity.getClass().getMethod("networkConfig", Path.class);
+            Object configured = networkConfigMethod.invoke(withIdentity, networkConfigPath);
+
+            java.lang.reflect.Method connectMethod = configured.getClass().getMethod("connect");
+            Object gateway = connectMethod.invoke(configured);
+
+            try {
+                java.lang.reflect.Method getNetwork = gateway.getClass().getMethod("getNetwork", String.class);
+                Object network = getNetwork.invoke(gateway, props.getChannel());
+
+                java.lang.reflect.Method getContract = network.getClass().getMethod("getContract", String.class);
+                Object contract = getContract.invoke(network, props.getChaincode());
+
+                java.lang.reflect.Method evaluateTransaction = contract.getClass().getMethod("evaluateTransaction", String.class, String.class);
+                Object result = evaluateTransaction.invoke(contract, "queryAnchor", snapshotId);
+                String json = result != null ? result.toString() : "";
+                java.util.Map<String, String> meta = new java.util.HashMap<>();
+                if (!json.isBlank()) {
+                    com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+                    java.util.Map m = om.readValue(json, java.util.Map.class);
+                    m.forEach((k, v) -> meta.put(String.valueOf(k), String.valueOf(v)));
+                }
+                return meta;
+            } finally {
+                try { java.lang.reflect.Method close = gateway.getClass().getMethod("close"); close.invoke(gateway); } catch (NoSuchMethodException ns) {}
+            }
+        } catch (ClassNotFoundException cnf) {
+            throw new IllegalStateException("Fabric Gateway SDK not available on classpath. Add the dependency or use the mock implementation.", cnf);
+        }
     }
 }
