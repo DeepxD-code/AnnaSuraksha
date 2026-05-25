@@ -63,6 +63,37 @@ Security & privacy (short)
 - Create readonly DB roles and masked views for any admin query console to avoid PII leakage.
 - Add DPIA, encryption at rest, audit logs, and a pen-test before any government deployment.
 
+Enabling H2 locally (safe demo mode)
+-----------------------------------
+If you need the H2 console UX for local demos, enable it only on a developer machine and never in
+production. Recommended approaches:
+
+- One-off run (recommended for demos):
+  - Linux / macOS:
+    ```bash
+    mvn -DskipTests spring-boot:run -Dspring-boot.run.arguments="--spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true"
+    ```
+  - Windows PowerShell:
+    ```powershell
+    $env:SPRING_H2_CONSOLE_ENABLED='true'; $env:ANNASURAKSHA_SEED_DEMO='true'; mvn -DskipTests spring-boot:run
+    ```
+
+- Dev profile (safer): create `src/main/resources/application-dev.properties` and set:
+  ```properties
+  spring.h2.console.enabled=true
+  annasuraksha.seed.demo-data=true
+  ```
+  Then run with the dev profile:
+  ```bash
+  mvn -DskipTests spring-boot:run -Dspring-boot.run.profiles=dev
+  ```
+
+Notes:
+- For reproducible demo credentials, set environment variables before starting the app:
+  - DEMO_ADMIN_PW, DEMO_OFFICER_PW, DEMO_AUDIT_PW, DEMO_FPS_PW
+- The H2 console will be available at: http://localhost:8081/h2-console when enabled. Use JDBC URL
+  `jdbc:h2:mem:annasuraksha`, username `sa`, and empty password (demo only).
+- Always disable the H2 console and demo seeding in staging/production.
 Productization checklist (priority)
 1. Immediate: disable demo seeding by default; remove plaintext demo passwords; require env vars for
    JWT_SECRET and GROQ_API_KEY.
