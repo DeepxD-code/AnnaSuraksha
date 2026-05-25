@@ -9,4 +9,5 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     List<AuditLog> findTop100ByOrderByCreatedAtDesc();
     List<AuditLog> findByEntityIdAndEntityType(String entityId, String entityType);
     List<AuditLog> findByPerformedByOrderByCreatedAtDesc(String performedBy);
+    List<AuditLog> findByPathStartingWithOrderByCreatedAtDesc(String pathPrefix);
 }
