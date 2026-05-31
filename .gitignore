@@ -27,3 +27,8 @@ Delombok*
 ## Environment
 .env
 .env.local
+
+## Runtime artifacts
+build.log
+bat_*.txt
+server_output.txt
