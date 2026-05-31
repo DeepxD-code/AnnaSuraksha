@@ -41,7 +41,7 @@ public class FraudMetricsService {
         Map<String, Long> riskDistribution,
         double monthlyLossRs,
         double annualLossRs,
-        int ghostCount,
+        long ghostCount,
         int activeSignalCount,
         String modelVersion,
         LocalDateTime computedAt

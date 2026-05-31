@@ -2,6 +2,7 @@ package com.annasuraksha.service.demo;
 
 import com.annasuraksha.model.*;
 import com.annasuraksha.service.*;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -408,7 +409,7 @@ public class SimulationService {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SimulationService.class);
     public SimulationService(BeneficiaryRepository beneRepo, FraudRiskScoringService scoringSvc,
                               FraudExplanationService explanationSvc, BlockchainService blockchainSvc,
-                              GhostDetectionService ghostSvc, FraudMetricsService metricsSvc) {
+                              GhostDetectionService ghostSvc, @Lazy FraudMetricsService metricsSvc) {
         this.beneRepo = beneRepo;
         this.scoringSvc = scoringSvc;
         this.explanationSvc = explanationSvc;
