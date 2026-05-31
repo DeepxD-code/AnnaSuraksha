@@ -1,0 +1,29 @@
+## Maven / target
+/target/
+**/target/
+
+## IDE
+.idea/
+.vscode/
+*.iml
+
+## Logs
+*.log
+
+## OS files
+Thumbs.db
+.DS_Store
+
+## Java
+*.class
+*.jar
+
+## Lombok / delombok outputs
+Delombok*
+
+## H2 database files (if any)
+*.h2.db
+
+## Environment
+.env
+.env.local

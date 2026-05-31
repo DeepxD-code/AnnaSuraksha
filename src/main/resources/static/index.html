@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AnnaSuraksha v5 — PDS Fraud Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --accent: #06b6d4;
+      --bg: #0a0a1a;
+      --card: #111128;
+      --card2: #16163a;
+      --border: rgba(99,102,241,0.2);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --error: #ef4444;
+      --success: #22c55e;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 80% 60% at 50% -20%, rgba(79,70,229,0.3) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(6,182,212,0.15) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .particles {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(99,102,241,0.5);
+      border-radius: 50%;
+      animation: float linear infinite;
+    }
+    @keyframes float {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100px) scale(1); opacity: 0; }
+    }
+    .login-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      padding: 2rem;
+    }
+    /* Logo / Brand */
+    .brand {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .brand-logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 0 40px rgba(79,70,229,0.4);
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 40px rgba(79,70,229,0.4); }
+      50% { box-shadow: 0 0 60px rgba(6,182,212,0.6); }
+    }
+    .brand h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #e2e8f0, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .brand p { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
+    /* Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent);
+    }
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .card-sub {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 2rem;
+    }
+    /* Form */
+    .form-group { margin-bottom: 1.25rem; }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: all 0.2s;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--primary);
+      background: rgba(79,70,229,0.1);
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+    }
+    input::placeholder { color: var(--muted); }
+    /* Button */
+    .btn {
+      width: 100%;
+      padding: 0.85rem 1.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .btn:hover::after { opacity: 1; }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(79,70,229,0.4); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-text { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    /* Spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Alert */
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+    .alert-error {
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+    }
+    .alert-success {
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: #86efac;
+    }
+    /* Hint box */
+    .hint {
+      background: rgba(6,182,212,0.08);
+      border: 1px solid rgba(6,182,212,0.2);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: #7dd3fc;
+    }
+    .hint strong { display: block; margin-bottom: 0.2rem; color: #38bdf8; }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+
+  <div class="login-wrapper">
+    <div class="brand">
+      <div class="brand-logo">🛡️</div>
+      <h1>AnnaSuraksha v5</h1>
+      <p>PDS Fraud Intelligence Platform</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Sign in to your account</div>
+      <div class="card-sub">Government secure login portal</div>
+
+      <div class="alert alert-error" id="errorAlert"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email address</label>
+          <input type="email" id="email" placeholder="you@annasuraksha.gov.in" autocomplete="email"
+                 value="admin@annasuraksha.gov.in" required/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"
+                 value="Admin@123" required/>
+        </div>
+        <button class="btn" id="loginBtn" type="submit">
+          <span class="btn-text">
+            <div class="spinner" id="spinner"></div>
+            <span id="btnLabel">Sign In</span>
+          </span>
+        </button>
+      </form>
+
+      <div class="hint">
+        <strong>Demo credentials pre-filled</strong>
+        admin@annasuraksha.gov.in / Admin@123
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generate floating particles
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 50; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+      p.style.animationDelay = (Math.random() * 10) + 's';
+      p.style.width = p.style.height = (Math.random() * 3 + 1) + 'px';
+      container.appendChild(p);
+    }
+
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const spinner = document.getElementById('spinner');
+    const btnLabel = document.getElementById('btnLabel');
+    const errorAlert = document.getElementById('errorAlert');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.style.display = 'none';
+      loginBtn.disabled = true;
+      spinner.style.display = 'block';
+      btnLabel.textContent = 'Signing in...';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (data.success && data.data?.token) {
+          localStorage.setItem('anna_token', data.data.token);
+          localStorage.setItem('anna_user', JSON.stringify({
+            email,
+            fullName: data.data.fullName,
+            roles: data.data.roles,
+            stateCode: data.data.stateCode
+          }));
+          btnLabel.textContent = 'Redirecting...';
+          setTimeout(() => window.location.href = '/dashboard.html', 500);
+        } else {
+          throw new Error(data.error || 'Login failed');
+        }
+      } catch (err) {
+        errorAlert.textContent = err.message || 'Unable to connect to server';
+        errorAlert.style.display = 'block';
+        loginBtn.disabled = false;
+        spinner.style.display = 'none';
+        btnLabel.textContent = 'Sign In';
+      }
+    });
+
+    // Redirect if already logged in
+    if (localStorage.getItem('anna_token')) {
+      window.location.href = '/dashboard.html';
+    }
+  </script>
+</body>
+</html>

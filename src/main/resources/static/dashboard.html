@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AnnaSuraksha v5 — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #4f46e5; --accent: #06b6d4;
+      --bg: #07071a; --sidebar: #0d0d27; --card: #111128; --border: rgba(99,102,241,0.15);
+      --text: #e2e8f0; --muted: #64748b; --muted2: #94a3b8;
+      --green: #22c55e; --yellow: #f59e0b; --red: #ef4444; --blue: #3b82f6;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    /* Sidebar */
+    .sidebar { width: 240px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top:0; left:0; bottom:0; z-index:100; }
+    .sidebar-logo { padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; }
+    .logo-icon { width:40px; height:40px; background: linear-gradient(135deg,var(--primary),var(--accent)); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+    .logo-text { font-weight:700; font-size:0.95rem; }
+    .logo-sub { font-size:0.7rem; color:var(--muted2); }
+    nav { padding: 0.75rem 0.5rem; flex:1; overflow-y:auto; }
+    .nav-section { font-size:0.65rem; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:0.5rem 0.75rem; margin-top:0.5rem; }
+    .nav-item { display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0.75rem; border-radius:8px; cursor:pointer; color:var(--muted2); font-size:0.85rem; font-weight:500; transition:all 0.15s; border:none; background:none; width:100%; text-align:left; margin-bottom:2px; }
+    .nav-item:hover { background:rgba(99,102,241,0.1); color:var(--text); }
+    .nav-item.active { background:rgba(79,70,229,0.2); color:#a5b4fc; border-left:2px solid var(--primary); }
+    .nav-item .icon { font-size:1rem; width:20px; text-align:center; }
+    .sidebar-footer { padding:0.75rem; border-top:1px solid var(--border); }
+    .user-pill { background:rgba(99,102,241,0.08); border:1px solid var(--border); border-radius:10px; padding:0.65rem; display:flex; align-items:center; gap:0.6rem; }
+    .user-avatar { width:32px; height:32px; background:linear-gradient(135deg,var(--primary),var(--accent)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; flex-shrink:0; }
+    .user-name { font-size:0.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .user-role { font-size:0.68rem; color:var(--muted2); }
+    .logout-btn { margin-left:auto; cursor:pointer; font-size:1.1rem; color:var(--muted2); flex-shrink:0; }
+    .logout-btn:hover { color:var(--red); }
+
+    /* Main Area */
+    .main { margin-left:240px; flex:1; min-height:100vh; display: flex; flex-direction: column; }
+    .topbar { background:rgba(7,7,26,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:0.85rem 1.5rem; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+    .topbar-title { font-size:1rem; font-weight:600; }
+    .topbar-right { display:flex; align-items:center; gap:1rem; font-size:0.8rem; color:var(--muted2); }
+    .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s infinite; }
+    @keyframes blink { 0%,100%{ opacity:1; } 50%{ opacity:0.5; } }
+    .content { padding:1.5rem; flex: 1; }
+
+    /* Sections */
+    .section { display:none; animation: fadeIn 0.3s ease-out; }
+    .section.active { display:block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Common Components */
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.25rem; position:relative; overflow:hidden; }
+    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+    .stat-card.b::before { background:linear-gradient(90deg,var(--primary),var(--accent)); }
+    .stat-card.g::before { background:linear-gradient(90deg,var(--green),#16a34a); }
+    .stat-card.o::before { background:linear-gradient(90deg,var(--yellow),#d97706); }
+    .stat-card.r::before { background:linear-gradient(90deg,var(--red),#b91c1c); }
+    .stat-icon { font-size:1.5rem; margin-bottom:0.5rem; display:block; }
+    .stat-val { font-size:1.8rem; font-weight:700; line-height:1; }
+    .stat-lbl { font-size:0.75rem; color:var(--muted2); margin-top:0.2rem; }
+
+    .table-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:1.25rem; }
+    .card-header { padding:1rem 1.25rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; }
+    .card-title { font-size:0.95rem; font-weight:600; }
+    table { width:100%; border-collapse:collapse; min-width: 600px; }
+    thead th { padding:0.75rem 1rem; text-align:left; font-size:0.7rem; font-weight:600; color:var(--muted2); letter-spacing:0.5px; text-transform:uppercase; background:rgba(255,255,255,0.02); border-bottom:1px solid var(--border); }
+    tbody tr { border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.15s; }
+    tbody tr:hover { background:rgba(99,102,241,0.05); }
+    td { padding:0.85rem 1rem; font-size:0.83rem; vertical-align: middle; }
+
+    .chip { display:inline-flex; align-items:center; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.72rem; font-weight:600; }
+    .chip-red { background:rgba(239,68,68,0.12); color:#fca5a5; }
+    .chip-orange { background:rgba(245,158,11,0.12); color:#fde68a; }
+    .chip-green { background:rgba(34,197,94,0.12); color:#86efac; }
+    .chip-blue { background:rgba(99,102,241,0.12); color:#a5b4fc; }
+    .chip-gray { background:rgba(148,163,184,0.1); color:#cbd5e1; }
+
+    .btn { padding:0.5rem 1rem; border-radius:8px; font-size:0.8rem; font-weight:600; cursor:pointer; border:none; transition:all 0.15s; display:inline-flex; align-items:center; gap:0.4rem; }
+    .btn-primary { background:linear-gradient(135deg,var(--primary),#3730a3); color:white; }
+    .btn-outline { background:transparent; border:1px solid var(--border); color:var(--muted2); }
+    .btn-outline:hover { background:rgba(99,102,241,0.1); color:var(--text); }
+
+    .grid-2 { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:1.25rem; margin-bottom:1.25rem; }
+    .search-bar { display:flex; gap:0.5rem; margin-bottom:1.25rem; }
+    .search-bar input { flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:0.65rem 1rem; color:var(--text); font-family:inherit; outline:none; }
+    .search-bar input:focus { border-color:var(--primary); box-shadow: 0 0 0 2px rgba(79,70,229,0.2); }
+
+    .info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:0.75rem; padding:1.25rem; }
+    .info-cell { background:rgba(99,102,241,0.05); border:1px solid var(--border); border-radius:10px; padding:0.85rem; }
+    .info-label { font-size:0.68rem; color:var(--muted2); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.3rem; }
+    .info-val { font-size:1.1rem; font-weight:700; word-break:break-all; }
+
+    .empty { text-align:center; padding:3rem; color:var(--muted2); font-size:0.85rem; }
+    .loading { text-align:center; padding:2rem; color:var(--muted2); font-size:0.85rem; }
+    .alert-banner { padding:0.85rem 1.25rem; border-radius:10px; margin-bottom:1.25rem; font-size:0.85rem; display:flex; align-items:center; gap:0.6rem; border:1px solid transparent; }
+    .alert-ok { background:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.3); color:#86efac; }
+    .alert-warn { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.3); color:#fca5a5; }
+
+    .refresh-btn:hover { color:var(--text); border-color:var(--primary); }
+
+    /* Modal & Forms */
+    .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:1000; padding:1.5rem; }
+    .modal-overlay.active { display:flex; }
+    .modal { background:var(--card); border:1px solid var(--border); border-radius:18px; width:100%; max-width:500px; box-shadow:0 20px 50px rgba(0,0,0,0.5); animation:modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height:90vh; overflow-y:auto; }
+    @keyframes modalIn { from { opacity:0; transform:scale(0.95) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    .modal-header { padding:1.25rem 1.5rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:between; }
+    .modal-body { padding:1.5rem; }
+    .modal-footer { padding:1.25rem 1.5rem; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:0.75rem; }
+    
+    .form-group { margin-bottom:1.25rem; }
+    .form-label { display:block; font-size:0.75rem; color:var(--muted2); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.5px; }
+    .form-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; padding:0.75rem 1rem; color:var(--text); font-family:inherit; outline:none; transition:all 0.15s; }
+    .form-input:focus { border-color:var(--primary); box-shadow: 0 0 0 2px rgba(79,70,229,0.2); }
+    .form-select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(148,163,184,0.8)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem; }
+    
+    .action-panel { display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+    .action-card { background:rgba(99,102,241,0.05); border:1px solid var(--border); border-radius:12px; padding:1.25rem; flex:1; min-width:200px; cursor:pointer; transition:all 0.15s; }
+    .action-card:hover { border-color:var(--primary); background:rgba(99,102,241,0.08); transform:translateY(-2px); }
+    .action-title { font-size:0.9rem; font-weight:600; margin-bottom:0.25rem; display:flex; align-items:center; gap:0.5rem; }
+    .action-desc { font-size:0.75rem; color:var(--muted); }
+
+    .calc-row { display:flex; gap:0.75rem; align-items:flex-end; margin-bottom:1.5rem; background:rgba(99,102,241,0.03); border:1px solid var(--border); padding:1.25rem; border-radius:12px; }
+    .calc-result { font-weight:700; color:var(--primary); font-size:1.1rem; }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🛡️</div>
+      <div><div class="logo-text">AnnaSuraksha</div><div class="logo-sub">PDS Intelligence v5</div></div>
+    </div>
+    <nav>
+      <div class="nav-section">Main</div>
+      <button class="nav-item active" onclick="nav('overview')" id="tab-overview"><span class="icon">🏠</span> Dashboard</button>
+      <button class="nav-item" onclick="nav('beneficiaries')" id="tab-beneficiaries"><span class="icon">👥</span> Beneficiaries</button>
+      <button class="nav-item" onclick="nav('fraud')" id="tab-fraud"><span class="icon">🔍</span> Fraud Analytics</button>
+      <div class="nav-section">Operations</div>
+      <button class="nav-item" onclick="nav('blockchain')" id="tab-blockchain"><span class="icon">⛓️</span> Blockchain Ledger</button>
+      <button class="nav-item" onclick="nav('supply')" id="tab-supply"><span class="icon">🚚</span> Supply Chain</button>
+      <button class="nav-item" onclick="nav('distribution')" id="tab-distribution"><span class="icon">🏪</span> FPS Distribution</button>
+      <button class="nav-item" onclick="nav('transparency')" id="tab-transparency"><span class="icon">📊</span> Transparency</button>
+      <button class="nav-item" onclick="nav('alerts')" id="tab-alerts"><span class="icon">🔔</span> Alerts</button>
+      <a class="nav-item" href="/h2-console" target="_blank" style="display:flex; flex-direction:column; align-items:flex-start; height:auto; padding:0.75rem 1rem;">
+        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+          <span><span class="icon">🗄️</span> H2 Database</span>
+          <span style="font-size:0.65rem; color:var(--primary); font-weight:600;">[DB Admin]</span>
+        </div>
+        <div style="font-size:0.65rem; color:var(--muted2); margin-top:0.25rem;">URL: jdbc:h2:mem:annasuraksha | User: sa</div>
+      </a>
+      <a class="nav-item" href="/actuator/health" target="_blank" style="display:flex; justify-content:space-between; align-items:center;">
+        <span><span class="icon">❤️</span> Health Check</span>
+        <span style="font-size:0.65rem; color:var(--primary); font-weight:600;">[Sys Admin]</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userInitial">A</div>
+        <div style="flex:1;min-width:0"><div class="user-name" id="userName">Admin</div><div class="user-role" id="userRole">ROLE_ADMIN</div></div>
+        <span class="logout-btn" onclick="logout()" title="Logout">⏏</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">Overview Dashboard</div>
+      <div class="topbar-right">
+        <span class="status-dot"></span><span>System Online</span>
+        <span id="clock"></span>
+      </div>
+    </div>
+
+    <div class="content" id="mainContent">
+
+      <!-- OVERVIEW -->
+      <div class="section active" id="s-overview">
+        <div class="stats-row">
+          <div class="stat-card b"><span class="stat-icon">👥</span><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total Beneficiaries</div></div>
+          <div class="stat-card g"><span class="stat-icon">✅</span><div class="stat-val" id="s-active">—</div><div class="stat-lbl">Active</div></div>
+          <div class="stat-card r"><span class="stat-icon">👻</span><div class="stat-val" id="s-ghost">—</div><div class="stat-lbl">Ghost Detected</div></div>
+          <div class="stat-card o"><span class="stat-icon">⚠️</span><div class="stat-val" id="s-fps">—</div><div class="stat-lbl">Flagged FPS</div></div>
+          <div class="stat-card r"><span class="stat-icon">📦</span><div class="stat-val" id="ov-supply">—</div><div class="stat-lbl">Supply Gaps</div></div>
+          <div class="stat-card g"><span class="stat-icon">⛓️</span><div class="stat-val" id="s-chain">—</div><div class="stat-lbl">Chain Status</div></div>
+        </div>
+        <div class="table-card">
+          <div class="card-header">
+        <span class="card-title">🚀 Overview</span>
+        <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: All Users]</div>
+      <button class="refresh-btn" onclick="loadOverview()">↻</button></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Name</th><th>State</th><th>Category</th><th>Status</th><th>Family</th><th>Rice (kg)</th></tr></thead>
+          <tbody id="overviewBeneTable"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- BENEFICIARIES -->
+      <div class="section" id="s-beneficiaries">
+        <div class="search-bar">
+          <input type="text" id="beneSearch" placeholder="Search by name or ID…" oninput="searchBene()"/>
+          <button class="btn btn-outline" onclick="loadBene()">↻ Refresh</button>
+          <button class="btn btn-primary" onclick="openModal('modal-reg-bene')">➕ Register Beneficiary</button>
+        </div>
+
+        <div class="card-header">
+        <span class="card-title">🧮 Entitlement Calculator</span>
+        <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: All Users]</div>
+      </div>
+        <div class="calc-row">
+          <div style="flex:1">
+            <label class="form-label">Category</label>
+            <select id="calcCat" class="form-input" onchange="calcEntitlement()">
+              <option value="PHH">Priority Household (PHH)</option>
+              <option value="AAY">Antyodaya Anna Yojana (AAY)</option>
+              <option value="BPL">Below Poverty Line (BPL)</option>
+              <option value="APL">Above Poverty Line (APL)</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <label class="form-label">Family Size</label>
+            <input type="number" id="calcSize" class="form-input" value="1" min="1" oninput="calcEntitlement()"/>
+          </div>
+          <div style="flex:2; padding-bottom:0.75rem">
+            <div class="calc-result" id="calcResult">Monthly Allocation: 5kg Rice, 3kg Wheat</div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="card-header"><span class="card-title">All Beneficiaries</span><span class="chip chip-blue" id="beneCount">0 total</span></div>
+          <div style="overflow-x:auto"><table><thead><tr><th>#ID</th><th>Name</th><th>State</th><th>Category</th><th>Status</th><th>Family</th><th>Rice</th><th>Ghost Reason</th></tr></thead>
+          <tbody id="beneTable"><tr><td colspan="8" class="loading">Loading…</td></tr></tbody></table></div>
+        </div>
+        <div style="display:flex;gap:0.5rem;justify-content:center;padding:1rem" id="benePagination"></div>
+      </div>
+
+      <!-- FRAUD -->
+      <div class="section" id="s-fraud">
+        <div class="stats-row">
+          <div class="stat-card r"><span class="stat-icon">🔥</span><div class="stat-val" id="f-high">—</div><div class="stat-lbl">High Risk</div></div>
+          <div class="stat-card o"><span class="stat-icon">⚡</span><div class="stat-val" id="f-dealers">—</div><div class="stat-lbl">Suspicious Dealers</div></div>
+          <div class="stat-card r"><span class="stat-icon">👻</span><div class="stat-val" id="f-ghost">—</div><div class="stat-lbl">Ghost Alerts</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="table-card">
+            <div class="card-header">
+        <span class="card-title">🔍 Fraud Analytics</span>
+        <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: Govt Official]</div>
+      <button class="refresh-btn" onclick="loadFraud()">↻</button></div>
+            <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Name</th><th>State</th><th>Fraud Score</th><th>Risk Level</th><th>Primary Flag</th></tr></thead>
+            <tbody id="fraudHighRisk"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody></table></div>
+          </div>
+          <div class="table-card">
+            <div class="card-header">
+        <span class="card-title">⚡ Suspicious FPS Dealers</span>
+        <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: Govt Official]</div>
+      </div>
+            <div style="overflow-x:auto"><table><thead><tr><th>Shop ID</th><th>State</th><th>Flags</th><th>Diversion %</th><th>Risk</th></tr></thead>
+            <tbody id="fraudDealers"><tr><td colspan="5" class="loading">Loading…</td></tr></tbody></table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOCKCHAIN -->
+      <div class="section" id="s-blockchain">
+        <div id="chainBanner" class="alert-banner alert-ok" style="display:none">Blockchain Integrity Verified</div>
+        <div class="stats-row">
+          <div class="stat-card b"><span class="stat-icon">⛓️</span><div class="stat-val" id="bc-total">—</div><div class="stat-lbl">Total Blocks</div></div>
+          <div class="stat-card g"><span class="stat-icon">🔒</span><div class="stat-val" id="bc-status">—</div><div class="stat-lbl">Chain Status</div></div>
+        </div>
+        <div class="table-card">
+          <div class="card-header">
+            <span class="card-title">Blockchain Audit Ledger</span>
+            <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: Govt Official, Auditor]</div>
+            <button class="refresh-btn" onclick="loadBlockchain()">↻</button>
+          </div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Height</th><th>Hash</th><th>Beneficiary</th><th>StateCode</th><th>Status</th><th>Registered At</th></tr></thead>
+          <tbody id="bcTable"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- SUPPLY CHAIN -->
+      <div class="section" id="s-supply">
+        <div class="action-panel">
+          <div class="action-card" onclick="openModal('modal-wh-load')">
+            <div class="action-title">📦 Auto-Dispatch Load</div>
+            <div class="action-desc">Load grain and dispatch immediately.</div>
+          </div>
+          <div class="action-card" onclick="openModal('modal-fps-receive')">
+            <div class="action-title">🏪 FPS Receive</div>
+            <div class="action-desc">Record receipt at Fair Price Shop.</div>
+          </div>
+        </div>
+
+        <div id="supplyStats" class="grid-2"></div>
+        <div class="table-card">
+          <div class="card-header">
+            <span class="card-title">📦 Recent Shipments (Warehouse Loads)</span>
+            <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: Govt Official]</div>
+            <button class="refresh-btn" onclick="loadRecentShipments()">↻</button>
+          </div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Shipment ID</th><th>Warehouse</th><th>FPS Shop</th><th>State</th><th>Rice (kg)</th><th>Wheat (kg)</th><th>Time</th><th>Action</th></tr></thead>
+          <tbody id="recentShipTable"><tr><td colspan="8" class="loading">No shipments created in this session.</td></tr></tbody></table></div>
+        </div>
+        <div class="table-card" style="margin-top:1.5rem">
+          <div class="card-header">
+            <span class="card-title">🚨 Flagged Shipment Discrepancies</span>
+            <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: FPS Owner, Govt Official]</div>
+            <button class="refresh-btn" onclick="loadSupply()">↻</button>
+          </div>
+          <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>FPS Shop</th><th>State</th><th>Rice Gap</th><th>Wheat Gap</th><th>Loss Rs</th><th>Reason</th></tr></thead>
+          <tbody id="supplyTable"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- FPS DISTRIBUTION -->
+      <div class="section" id="s-distribution">
+        <div class="grid-2">
+          <div class="table-card" style="height:fit-content">
+            <div class="card-header"><span class="card-title">🆕 Record Distribution</span></div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label class="form-label">Beneficiary ID / Index</label>
+                <div style="display:flex; gap:0.5rem">
+                  <input type="text" id="distBeneId" class="form-input" placeholder="e.g. 1 or SUNITA"/>
+                  <button class="btn btn-outline" onclick="checkBeneEntitlement()">Check</button>
+                </div>
+              </div>
+              <div id="beneEntHint" style="display:none; background:var(--card-bg); border-left:4px solid var(--primary); padding:0.75rem; margin-bottom:1.25rem; font-size:0.85rem"></div>
+              <div class="grid-2" style="margin-bottom:0">
+                <div class="form-group"><label class="form-label">Rice (kg)</label><input type="number" id="distRice" class="form-input" value="0"/></div>
+                <div class="form-group"><label class="form-label">Wheat (kg)</label><input type="number" id="distWheat" class="form-input" value="0"/></div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">FPS Shop ID</label>
+                <input type="text" id="distFps" class="form-input" placeholder="FPS-001"/>
+              </div>
+              <button class="btn btn-primary" style="width:100%" onclick="submitDist()">Record Distribution</button>
+            </div>
+          </div>
+          <div class="table-card">
+            <div class="card-header">
+              <span class="card-title">📜 Recent Distributions</span>
+              <button class="refresh-btn" onclick="loadDistributions()">↻</button>
+            </div>
+            <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Beneficiary</th><th>Shop</th><th>Rice</th><th>Wheat</th><th>Status</th></tr></thead>
+            <tbody id="distTable"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody></table></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSPARENCY -->
+      <div class="section" id="s-transparency">
+        <div class="table-card">
+          <div class="card-header">
+            <span class="card-title">State-wise Summary</span>
+            <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: Govt Official, Public Auditor]</div>
+            <button class="refresh-btn" onclick="loadTransparency()">↻</button>
+          </div>
+          <div style="overflow-x:auto"><table><thead><tr><th>State</th><th>Total</th><th>Active</th><th>Ghost</th><th>Fraud Rate %</th></tr></thead>
+          <tbody id="transStateTable"><tr><td colspan="5" class="loading">Loading…</td></tr></tbody></table></div>
+        </div>
+        <div class="table-card" style="margin-top:1.5rem">
+          <div class="card-header">
+        <span class="card-title">⛓️ Blockchain Ledger</span>
+        <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: Govt Official, Auditor]</div>
+      </div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Height</th><th>Hash</th><th>State</th><th>Category</th><th>Status</th><th>DateTime</th></tr></thead>
+          <tbody id="transLedgerTable"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="section" id="s-alerts">
+        <div class="stats-row">
+          <div class="stat-card r"><span class="stat-icon">🚨</span><div class="stat-val" id="al-count">—</div><div class="stat-lbl">Total Active Alerts</div></div>
+        </div>
+        <div class="table-card">
+          <div class="card-header">
+            <span class="card-title">Active Notifications</span>
+            <div class="action-desc" style="color:var(--primary); font-weight:600;">[Accessible to: All Registered Officials]</div>
+            <button class="refresh-btn" onclick="loadAlerts()">↻</button>
+          </div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Type</th><th>Severity</th><th>Title</th><th>Description</th><th>State</th><th>Time</th></tr></thead>
+          <tbody id="alertTable"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody></table></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="modal-reg-bene">
+    <div class="modal">
+      <div class="modal-header"><span class="card-title">Register New Beneficiary</span></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="regName" class="form-input" placeholder="e.g. Rajesh Kumar"/>
+        </div>
+        <div class="grid-2" style="margin-bottom:0">
+          <div class="form-group">
+            <label class="form-label">State Code</label>
+            <input type="text" id="regState" class="form-input" placeholder="BR, UP, MH..." maxlength="2"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select id="regCat" class="form-input form-select">
+              <option value="PHH">PHH (Priority Household)</option>
+              <option value="AAY">AAY (Antyodaya Anna Yojana)</option>
+              <option value="BPL">Below Poverty Line (BPL)</option>
+              <option value="APL">Above Poverty Line (APL)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-bottom:0">
+          <div class="form-group">
+            <label class="form-label">Family Size</label>
+            <input type="number" id="regSize" class="form-input" value="1" min="1"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Migrant Status</label>
+            <select id="regMigrant" class="form-input form-select">
+              <option value="false">Local</option>
+              <option value="true">Migrant</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Aadhaar Number (Raw/Private)</label>
+          <input type="password" id="regAadhaar" class="form-input" placeholder="12-digit number"/>
+          <div class="action-desc" style="margin-top:0.25rem">Privacy: This is hashed before storage. Only masked version will be public.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('modal-reg-bene')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitRegistration()">Register on Blockchain</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-wh-load">
+    <div class="modal">
+      <div class="modal-header"><span class="card-title">Load & Auto-Dispatch Shipment</span></div>
+      <div class="modal-body">
+        <div style="background:var(--card-bg); border-left:4px solid var(--primary); padding:0.75rem; margin-bottom:1rem; font-size:0.9rem">
+          💡 <b>Note:</b> Shipment ID is auto-generated. This record will move directly to "DISPATCHED" stage.
+        </div>
+        <div class="grid-2" style="margin-bottom:0">
+          <div class="form-group">
+            <label class="form-label">Warehouse ID</label>
+            <input type="text" id="whId" class="form-input" placeholder="WH-001" oninput="autoTrackTransport(this.value)"/>
+          </div>
+          <div class="form-group"><label class="form-label">Transporter ID (Auto-Tracked)</label><input type="text" id="whTrans" class="form-input" placeholder="TRUCK-IND-01"/></div>
+        </div>
+        <div class="grid-2" style="margin-bottom:0">
+          <div class="form-group"><label class="form-label">FPS Shop ID</label><input type="text" id="whFps" class="form-input" placeholder="FPS-XYZ"/></div>
+          <div class="form-group"><label class="form-label">State Code</label><input type="text" id="whState" class="form-input" placeholder="BR"/></div>
+        </div>
+        <div class="grid-2" style="margin-bottom:0">
+          <div class="form-group"><label class="form-label">District</label><input type="text" id="whDist" class="form-input" placeholder="Patna"/></div>
+          <div class="form-group"><label class="form-label">Rice (kg)</label><input type="number" id="whRice" class="form-input" value="1000"/></div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Wheat (kg)</label><input type="number" id="whWheat" class="form-input" value="500"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('modal-wh-load')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitWHLoad()">Load & Dispatch</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-fps-receive">
+    <div class="modal">
+      <div class="modal-header"><span class="card-title">Record FPS Receipt</span></div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Shipment ID</label><input type="text" id="recvId" class="form-input" placeholder="SHIP-XXXX..."/></div>
+        <div class="grid-2" style="margin-bottom:0">
+          <div class="form-group"><label class="form-label">Received Rice (kg)</label><input type="number" id="recvRice" class="form-input" value="1000"/></div>
+          <div class="form-group"><label class="form-label">Received Wheat (kg)</label><input type="number" id="recvWheat" class="form-input" value="500"/></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('modal-fps-receive')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitReceive()">Confirm Receipt</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('anna_token');
+    if (!token) window.location.href = '/index.html';
+
+    const user = JSON.parse(localStorage.getItem('anna_user') || '{}');
+    document.getElementById('userName').textContent = user.fullName || user.email || 'Admin User';
+    document.getElementById('userRole').textContent = (user.roles || ['ROLE_ADMIN']).join(', ');
+    document.getElementById('userInitial').textContent = (user.fullName || user.email || 'A')[0].toUpperCase();
+
+    setInterval(() => {
+      const clock = document.getElementById('clock');
+      if (clock) clock.textContent = new Date().toLocaleTimeString('en-IN', { hour12: false });
+    }, 1000);
+
+    const H = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+
+    async function api(url) {
+      try {
+        console.log(`API Call: ${url}`);
+        const r = await fetch(url, { headers: H });
+        if (r.status === 401) { logout(); return null; }
+        const j = await r.json();
+        const data = j.success !== false ? (j.data ?? j) : null;
+        console.log(`API Response for ${url}:`, data);
+        return data;
+      } catch (e) { console.error(`API Error for ${url}:`, e); return null; }
+    }
+
+    function chip(val, type) { return `<span class="chip chip-${type}">${val||'—'}</span>`; }
+    function riskChip(l) { const lvl = (l||'').toUpperCase(); return chip(lvl, lvl==='HIGH'?'red':lvl==='MEDIUM'?'orange':'green'); }
+    function stateChip(s) { const col = s==='ACTIVE'?'green':s==='GHOST'?'red':s==='SUSPENDED'?'orange':'gray'; return chip(s, col); }
+    function fmt(v) { return v != null ? v : '—'; }
+    function dt(v) { if(!v) return '—'; try { return new Date(v).toLocaleDateString('en-IN') + ' ' + new Date(v).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); } catch { return v; } }
+    function empty(msg, cols) { return `<tr><td colspan="${cols}" class="empty"><div style="font-size:2rem;margin-bottom:0.5rem">📭</div>${msg}</td></tr>`; }
+
+    // Modals
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    // Calculator
+    function calcEntitlement() {
+      const cat = document.getElementById('calcCat').value;
+      const size = parseInt(document.getElementById('calcSize').value) || 1;
+      let r = 0, w = 0;
+      if (cat === 'AAY') { r = 14; w = 21; }
+      else if (cat === 'BPL') { r = Math.max(25, size * 5); w = Math.max(10, size * 2); }
+      else if (cat === 'PHH') { r = size * 5; w = size * 3; }
+      else if (cat === 'APL') { r = size * 2; w = size * 1; }
+      document.getElementById('calcResult').textContent = `Monthly Allocation: ${r}kg Rice, ${w}kg Wheat`;
+    }
+
+    function autoTrackTransport(whId) {
+      const mapping = {
+        'WH-01': 'TRUCK-IND-01', 'WH-001': 'TRUCK-IND-01',
+        'WH-02': 'TRUCK-IND-02', 'WH-PATNA': 'PATNA-LORE-01',
+        'WAREHOUSE-1': 'EXPRESS-SHIP-01'
+      };
+      const trans = mapping[whId.toUpperCase()] || '';
+      if (trans) {
+        const transInput = document.getElementById('whTrans');
+        if (transInput) transInput.value = trans;
+      }
+    }
+
+    // Navigation
+    function nav(section) {
+      console.log(`Navigating to: ${section}`);
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      const secEl = document.getElementById('s-' + section);
+      const tabEl = document.getElementById('tab-' + section);
+      if (secEl) secEl.classList.add('active');
+      if (tabEl) tabEl.classList.add('active');
+      
+      const titles = { overview:'Dashboard', beneficiaries:'Beneficiaries', fraud:'Fraud Analytics', blockchain:'Blockchain Ledger', supply:'Supply Chain', transparency:'Transparency', alerts:'Alerts' };
+      document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
+      
+      const loaders = { overview: loadOverview, beneficiaries: loadBene, fraud: loadFraud, blockchain: loadBlockchain, supply: loadSupply, transparency: loadTransparency, alerts: loadAlerts };
+      if (loaders[section]) loaders[section]();
+    }
+
+    // Loaders
+    async function loadOverview() {
+      const d = await api('/api/stats');
+      if (d) {
+        document.getElementById('s-total').textContent = d.totalBeneficiaries;
+        document.getElementById('s-active').textContent = d.activeBeneficiaries;
+        document.getElementById('s-ghost').textContent = d.ghostDetected;
+        document.getElementById('s-fps').textContent = d.flaggedFpsShops;
+        document.getElementById('ov-supply').textContent = d.supplyDiscrepancies;
+        document.getElementById('s-chain').textContent = d.chainIntact ? 'OK' : 'FAIL';
+      }
+      const bd = await api('/api/beneficiary?page=0&size=10');
+      const tbody = document.getElementById('overviewBeneTable');
+      if (!bd) { tbody.innerHTML = empty('Error loading data', 6); return; }
+      const items = bd.content || bd;
+      tbody.innerHTML = items.map(b => `<tr>
+        <td><strong>${fmt(b.fullName)}</strong></td>
+        <td>${fmt(b.stateCode)}</td>
+        <td>${chip(b.category, 'blue')}</td>
+        <td>${stateChip(b.status)}</td>
+        <td>${fmt(b.familySize)}</td>
+        <td>${fmt(b.riceKg)}</td>
+      </tr>`).join('') || empty('No records', 6);
+    }
+
+    async function loadBene(page = 0) {
+      const d = await api(`/api/beneficiary?page=${page}&size=15`);
+      const tbody = document.getElementById('beneTable');
+      if (!d) { tbody.innerHTML = empty('Error', 8); return; }
+      const items = d.content || d;
+      const total = d.totalElements || items.length;
+      document.getElementById('beneCount').textContent = `${total} total`;
+      tbody.innerHTML = items.map(b => `<tr>
+        <td style="color:var(--muted2)">#${b.id}</td>
+        <td><strong>${fmt(b.fullName)}</strong></td>
+        <td>${fmt(b.stateCode)}</td>
+        <td>${chip(b.category, 'blue')}</td>
+        <td>${stateChip(b.status)}</td>
+        <td>${fmt(b.familySize)}</td>
+        <td>${fmt(b.riceKg)} kg</td>
+        <td style="font-size:0.75rem">${fmt(b.ghostReason)}</td>
+      </tr>`).join('') || empty('No beneficiaries found', 8);
+      renderPagination(total, page, 15, 'loadBene', 'benePagination');
+    }
+
+    async function searchBene() {
+      const q = document.getElementById('beneSearch').value.trim();
+      if (!q) { loadBene(0); return; }
+      const d = await api(`/api/beneficiary/search?q=${encodeURIComponent(q)}`);
+      if (!d) return;
+      const items = Array.isArray(d) ? d : (d.results || []);
+      document.getElementById('beneCount').textContent = `${items.length} results`;
+      document.getElementById('beneTable').innerHTML = items.map(b => `<tr>
+        <td style="color:var(--muted2)">#${b.id}</td>
+        <td><strong>${fmt(b.fullName)}</strong></td>
+        <td>${fmt(b.stateCode)}</td>
+        <td>${chip(b.category, 'blue')}</td>
+        <td>${stateChip(b.status)}</td>
+        <td>${fmt(b.familySize)}</td>
+        <td>${fmt(b.riceKg)} kg</td>
+        <td style="font-size:0.75rem">${fmt(b.ghostReason)}</td>
+      </tr>`).join('') || empty('No results', 8);
+      document.getElementById('benePagination').innerHTML = '';
+    }
+
+    async function loadFraud() {
+      const hr = await api('/api/fraud/high-risk-beneficiaries?limit=20');
+      if (hr) {
+        const items = hr.results || [];
+        document.getElementById('f-high').textContent = hr.totalHighRisk || items.length;
+        document.getElementById('fraudHighRisk').innerHTML = items.map(s => `<tr>
+          <td style="color:var(--muted2)">#${s.beneficiaryId||s.id}</td>
+          <td>${fmt(s.fullName)}</td>
+          <td>${fmt(s.stateCode)}</td>
+          <td><strong style="color:var(--red)">${fmt(s.fraudScore)}</strong></td>
+          <td>${riskChip(s.riskLevel)}</td>
+          <td style="font-size:0.75rem">${fmt(s.fraudFlag)}</td>
+        </tr>`).join('') || empty('None', 6);
+      }
+      const sd = await api('/api/fraud/suspicious-dealers?limit=15');
+      if (sd) {
+        const items = sd.results || [];
+        document.getElementById('f-dealers').textContent = items.length;
+        document.getElementById('fraudDealers').innerHTML = items.map(d => `<tr>
+          <td style="font-family:monospace">${fmt(d.fpsShopId)}</td>
+          <td>${fmt(d.state)}</td>
+          <td>${d.flaggedDeliveries||0}/${d.totalDeliveries||0}</td>
+          <td><strong style="${(d.diversionRatePct||0)>50?'color:var(--red)':''}">${fmt(d.diversionRatePct)}%</strong></td>
+          <td>${riskChip(d.riskLevel)}</td>
+        </tr>`).join('') || empty('None', 5);
+      }
+      const gd = await api('/api/beneficiary?page=0&size=50');
+      if (gd) {
+        const ghosts = (gd.content || gd).filter(b => b.status === 'GHOST');
+        document.getElementById('f-ghost').textContent = ghosts.length;
+      }
+    }
+
+    async function loadBlockchain() {
+      const d = await api('/api/supply-chain/ledger/audit?page=0&size=20');
+      if (!d) return;
+      document.getElementById('bc-total').textContent = d.totalBlocks;
+      document.getElementById('bc-status').textContent = d.chainValid ? 'OK' : 'TAMPERED';
+      const ban = document.getElementById('chainBanner');
+      ban.style.display = 'flex';
+      ban.className = d.chainValid ? 'alert-banner alert-ok' : 'alert-banner alert-warn';
+      ban.textContent = d.chainValid ? 'Blockchain Integrity Verified — Chain is Intact' : 'Warning: Blockchain Integrity Violation Detected!';
+      document.getElementById('bcTable').innerHTML = (d.blocks || []).map(b => `<tr>
+        <td><strong>#${b.blockHeight}</strong></td>
+        <td style="font-family:monospace;font-size:0.75rem">${b.shortHash}</td>
+        <td>${fmt(b.name)}</td>
+        <td>${fmt(b.state)}</td>
+        <td>${stateChip(b.status)}</td>
+        <td>${dt(b.registeredAt)}</td>
+      </tr>`).join('') || empty('No blocks', 6);
+    }
+
+    async function loadSupply() {
+      const sum = await api('/api/supply-chain/summary');
+      const stats = document.getElementById('supplyStats');
+      if (sum) {
+        stats.innerHTML = Object.entries(sum).filter(([k]) => k !== 'generatedAt').map(([k, v]) => `
+          <div class="stat-card b">
+            <div class="info-label">${k.replace(/([A-Z])/g,' $1').trim()}</div>
+            <div class="stat-val">${v ?? 0}</div>
+          </div>
+        `).join('');
+      } else { stats.innerHTML = ''; }
+
+      const fl = await api('/api/supply-chain/flagged');
+      const tbody = document.getElementById('supplyTable');
+      if (!fl) { tbody.innerHTML = empty('Error', 7); return; }
+      const items = fl.results || [];
+      tbody.innerHTML = items.map(e => `<tr>
+        <td style="font-family:monospace">${fmt(e.shipmentId)}</td>
+        <td>${fmt(e.fpsShop)}</td>
+        <td>${fmt(e.state)}</td>
+        <td style="color:var(--red)">${fmt(e.riceLostKg)}kg</td>
+        <td style="color:var(--red)">${fmt(e.wheatLostKg)}kg</td>
+        <td>₹${fmt(e.estimatedLossRs)}</td>
+        <td style="font-size:0.75rem">${fmt(e.discrepancyReason)}</td>
+      </tr>`).join('') || empty('No discrepancies found', 7);
+    }
+
+    async function loadTransparency() {
+      const ss = await api('/api/transparency/state-summary');
+      if (ss) {
+        document.getElementById('transStateTable').innerHTML = (ss || []).map(s => `<tr>
+          <td><strong>${fmt(s.stateCode)}</strong></td>
+          <td>${fmt(s.total)}</td>
+          <td style="color:var(--green)">${fmt(s.active)}</td>
+          <td style="color:var(--red)">${fmt(s.ghost)}</td>
+          <td><strong style="${(s.fraudRate||0)>10?'color:var(--red)':''}">${s.fraudRate||0}%</strong></td>
+        </tr>`).join('') || empty('No data', 5);
+      }
+      const pl = await api('/api/transparency/public-ledger?page=0&size=20');
+      if (pl) {
+        document.getElementById('transLedgerTable').innerHTML = (pl.blocks || []).map(b => `<tr>
+          <td><strong>#${b.blockHeight}</strong></td>
+          <td style="font-family:monospace;font-size:0.75rem">${b.shortHash}</td>
+          <td>${fmt(b.state)}</td>
+          <td>${chip(b.category, 'blue')}</td>
+          <td>${stateChip(b.status)}</td>
+          <td>${dt(b.registeredAt)}</td>
+        </tr>`).join('') || empty('No ledger entries', 6);
+      }
+    }
+
+    async function loadRecentShipments() {
+      const res = await api('/api/supply-chain/recent');
+      const tbody = document.getElementById('recentShipTable');
+      if (!tbody || !res) return;
+      tbody.innerHTML = res.map(s => `
+        <tr>
+          <td style="font-family:monospace; font-weight:bold; color:var(--primary)">${s.shipmentId}</td>
+          <td>${s.warehouseId}</td>
+          <td>${s.fpsShop}</td>
+          <td>${chip(s.state, 'blue')}</td>
+          <td>${s.riceKg}kg</td>
+          <td>${s.wheatKg}kg</td>
+          <td style="font-size:0.75rem">${dt(s.timestamp)}</td>
+          <td><button class="btn btn-sm" onclick="copyId('${s.shipmentId}')">Copy</button></td>
+        </tr>
+      `).join('') || empty('No shipments found', 8);
+    }
+
+    function copyId(id) {
+      navigator.clipboard.writeText(id);
+      alert('Copied to clipboard: ' + id);
+    }
+
+    async function loadAlerts() {
+      const stats = await api('/api/alerts/stats');
+      if (stats) document.getElementById('al-count').textContent = stats.criticalCount + stats.warningCount;
+      const active = await api('/api/alerts/active?limit=50');
+      const tbody = document.getElementById('alertTable');
+      if (!active) { tbody.innerHTML = empty('Error', 6); return; }
+      tbody.innerHTML = (active.results || []).map(a => `<tr>
+        <td style="font-size:0.75rem;font-family:monospace">${fmt(a.alertType)}</td>
+        <td>${chip(a.severity, a.severity==='CRITICAL'?'red':a.severity==='WARNING'?'orange':'blue')}</td>
+        <td><strong>${fmt(a.title)}</strong></td>
+        <td style="font-size:0.75rem">${fmt(a.description)}</td>
+        <td>${fmt(a.stateCode)}</td>
+        <td style="font-size:0.75rem">${dt(a.createdAt||a.timestamp)}</td>
+      </tr>`).join('') || empty('No active alerts', 6);
+    }
+
+    function renderPagination(total, page, size, fn, containerId) {
+      const pages = Math.ceil(total / size);
+      const cont = document.getElementById(containerId);
+      if (pages <= 1) { if(cont) cont.innerHTML = ''; return; }
+      let html = '';
+      for (let i = 0; i < pages; i++) {
+        html += `<button class="btn ${i===page?'btn-primary':'btn-outline'}" onclick="${fn}(${i})">${i+1}</button>`;
+      }
+      if(cont) cont.innerHTML = html;
+    }
+
+    function logout() { localStorage.removeItem('anna_token'); localStorage.removeItem('anna_user'); window.location.href = '/index.html'; }
+
+    // Action Submissions
+    async function submitRegistration() {
+      const b = {
+        fullName: document.getElementById('regName').value,
+        stateCode: document.getElementById('regState').value,
+        category: document.getElementById('regCat').value,
+        familySize: parseInt(document.getElementById('regSize').value),
+        migrant: document.getElementById('regMigrant').value,
+        aadhaarRaw: document.getElementById('regAadhaar').value
+      };
+      if (!b.fullName || !b.stateCode || !b.aadhaarRaw) return alert('Please fill required fields.');
+      
+      const res = await fetch('/api/beneficiary/register', { 
+        method:'POST', headers:H, body:JSON.stringify(b) 
+      });
+      const j = await res.json();
+      if (j.success) {
+        alert('Beneficiary Registered Successfully! Block Height: ' + j.data.blockHeight);
+        closeModal('modal-reg-bene');
+        loadBene();
+      } else {
+        alert('Error: ' + j.message);
+      }
+    }
+
+    async function submitWHLoad() {
+      const b = {
+        warehouse_id: document.getElementById('whId').value,
+        transporter_id: document.getElementById('whTrans').value,
+        fps_shop_id: document.getElementById('whFps').value,
+        state_code: document.getElementById('whState').value,
+        district: document.getElementById('whDist').value,
+        warehouse_officer_id: (user.fullName || 'Admin') + " (Auto-Dispatch)",
+        rice_kg: parseInt(document.getElementById('whRice').value),
+        wheat_kg: parseInt(document.getElementById('whWheat').value),
+        sugar_kg: 0
+      };
+      const res = await fetch('/api/supply-chain/warehouse-load', { 
+        method:'POST', headers:H, body:JSON.stringify(b) 
+      });
+      const j = await res.json();
+      if (j.success) {
+        alert('✅ SUCCESS: Shipment Loaded & Dispatched!\n\nShipment ID: ' + j.data.shipmentId + '\n\nThe transporter ' + b.transporter_id + ' is now in-transit to ' + b.fps_shop_id + '.');
+        closeModal('modal-wh-load');
+        loadRecentShipments();
+        loadSupply();
+      } else { alert('Error: ' + j.message); }
+    }
+
+    async function submitReceive() {
+      const id = document.getElementById('recvId').value;
+      const r = parseInt(document.getElementById('recvRice').value);
+      const w = parseInt(document.getElementById('recvWheat').value);
+      if (!id) return alert('Fill ID.');
+      const res = await fetch('/api/supply-chain/fps-receive', { 
+        method:'POST', headers:H, body:JSON.stringify({ 
+          shipment_id:id, fps_operator_id:'FPS-OP-01', 
+          received_rice_kg:r, received_wheat_kg:w, received_sugar_kg:0 
+        }) 
+      });
+      const j = await res.json();
+      if (j.success) {
+        let msg = 'Receipt Recorded!';
+        if (j.data.discrepancyFlagged) msg += '\n⚠️ ALERT: ' + j.data.discrepancyReason;
+        alert(msg);
+        closeModal('modal-fps-receive');
+        loadSupply();
+        loadAlerts();
+      } else { alert('Error: ' + j.message); }
+    }
+
+    async function checkBeneEntitlement() {
+      const q = document.getElementById('distBeneId').value;
+      if (!q) return;
+      const res = await fetch('/api/beneficiary/search?q=' + encodeURIComponent(q), { headers: H });
+      const j = await res.json();
+      const hint = document.getElementById('beneEntHint');
+      if (j.success && j.data.length > 0) {
+        // Get full details for the first match
+        const fullRes = await fetch('/api/beneficiary/' + j.data[0].id, { headers: H });
+        const fj = await fullRes.json();
+        if (fj.success) {
+          const b = fj.data;
+          hint.innerHTML = `👤 <b>${b.fullName}</b> (#${b.id})<br/>📦 Entitlement: ${b.riceKg}kg Rice, ${b.wheatKg}kg Wheat<br/>🏠 Shop: ${b.fpsShopId || 'Not Assigned'}`;
+          hint.style.display = 'block';
+          document.getElementById('distRice').value = b.riceKg;
+          document.getElementById('distWheat').value = b.wheatKg;
+          document.getElementById('distFps').value = b.fpsShopId || '';
+          document.getElementById('distBeneId').dataset.id = b.id;
+        }
+      } else {
+        hint.innerHTML = '❌ Beneficiary not found.';
+        hint.style.display = 'block';
+      }
+    }
+
+    async function submitDist() {
+      const id = document.getElementById('distBeneId').dataset.id;
+      if (!id) return alert('Please check beneficiary first.');
+      const b = {
+        beneficiary_id: id,
+        fps_shop_id: document.getElementById('distFps').value,
+        rice_kg: parseInt(document.getElementById('distRice').value),
+        wheat_kg: parseInt(document.getElementById('distWheat').value),
+        sugar_kg: 0
+      };
+      const res = await fetch('/api/distribution', { 
+        method:'POST', headers:H, body:JSON.stringify(b) 
+      });
+      const j = await res.json();
+      if (j.success) {
+        let msg = '✅ Distribution Recorded!';
+        if (j.data.violation) msg += '\n⚠️ ALERT: ' + j.data.alert;
+        alert(msg);
+        loadDistributions();
+        loadAlerts();
+      } else { alert('Error: ' + j.message); }
+    }
+
+    async function loadDistributions() {
+      const res = await fetch('/api/distribution', { headers: H });
+      const j = await res.json();
+      if (j.success) {
+        document.getElementById('distTable').innerHTML = j.data.map(d => `<tr>
+          <td>#${d.id}</td>
+          <td>${d.beneficiaryName}</td>
+          <td>${d.fpsShopId}</td>
+          <td>${d.riceKg}kg</td>
+          <td>${d.wheatKg}kg</td>
+          <td><span class="badge ${d.ruleViolation ? 'alert-warn' : 'alert-success'}">${d.ruleViolation ? 'FLAGGED' : 'CLEAN'}</span></td>
+        </tr>`).join('') || '<tr><td colspan="6" class="none">No distributions yet.</td></tr>';
+      }
+    }
+
+    // Start
+    loadOverview();
+    calcEntitlement();
+    loadRecentShipments();
+    loadDistributions();
+  </script>
+</body>
+</html>
