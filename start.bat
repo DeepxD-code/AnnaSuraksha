@@ -112,17 +112,14 @@ echo  %GREEN%[OK]%RESET% Port %APP_PORT% is free
 :: ─── Print versions ────────────────────────────────────────────────
 echo %BOLD%%CYAN%  :: [3/5] Tool versions:%RESET%
 for /f "tokens=1-3" %%v in ('java -version 2^>^&1 ^| findstr /b "java openjdk"') do echo    Java: %%v %%w %%x
-%MVN_CMD% --version 2>&1 | findstr "Apache Maven"
+call %MVN_CMD% --version 2>&1 | findstr "Apache Maven"
 
 :: ─── Build ──────────────────────────────────────────────────────────
 echo %BOLD%%CYAN%  :: [4/5] Building application...%RESET%
-if exist "%APP_JAR%" (
-    %MVN_CMD% -DskipTests clean package -q
-) else (
-    %MVN_CMD% -DskipTests clean package
-)
+call %MVN_CMD% -DskipTests clean package > build.log 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo  %RED%[X]%RESET% Build failed.
+    type build.log
+    echo  %RED%[X]%RESET% Build failed. See build.log for details.
     pause & exit /b 1
 )
 echo  %GREEN%[OK]%RESET% Build successful
@@ -133,10 +130,10 @@ echo %BOLD%%CYAN%  :: [5/5] Launching AnnaSuraksha...%RESET%
 set SPRING_H2_CONSOLE_ENABLED=true
 set ANNASURAKSHA_SEED_DEMO=true
 set JWT_SECRET=ANNASURAKSHA_V5_JWT_SECRET_KEY_32CHARS_MIN
-if not defined DEMO_ADMIN_PW set DEMO_ADMIN_PW=admin123
-if not defined DEMO_OFFICER_PW set DEMO_OFFICER_PW=officer123
-if not defined DEMO_AUDIT_PW set DEMO_AUDIT_PW=audit123
-if not defined DEMO_FPS_PW set DEMO_FPS_PW=fps123
+if not defined DEMO_ADMIN_PW set DEMO_ADMIN_PW=Admin@123
+if not defined DEMO_OFFICER_PW set DEMO_OFFICER_PW=Officer@123
+if not defined DEMO_AUDIT_PW set DEMO_AUDIT_PW=Audit@123
+if not defined DEMO_FPS_PW set DEMO_FPS_PW=Fps@123
 
 echo.
 echo  %CYAN%┌─────────────────────────────────────────────────────────┐%RESET%
@@ -145,8 +142,7 @@ echo  %CYAN%│  Swagger UI: http://localhost:%APP_PORT%/swagger-ui.html        
 echo  %CYAN%└─────────────────────────────────────────────────────────┘%RESET%
 echo.
 
-set "JAVA_CMD="%JAVA_EXE%" -jar "%APP_JAR%" --server.port=%APP_PORT% --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true"
-start "AnnaSuraksha v%APP_VERSION%" cmd /c %JAVA_CMD%
+start /b "" "%JAVA_EXE%" -jar "%APP_JAR%" --server.port=%APP_PORT% --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
 
 :: ─── Wait for health ────────────────────────────────────────────────
 set WAIT_S=0
@@ -160,7 +156,7 @@ set /a WAIT_S+=2
 if %WAIT_S% GEQ 60 (
     echo  %RED%[X]%RESET% App did not start within 60 seconds.
     echo.
-    echo  %YELLOW%[^>]%RESET% Run manually: %JAVA_CMD%
+    echo  %YELLOW%[^>]%RESET% Run manually: "%JAVA_EXE%" -jar "%APP_JAR%" --server.port=%APP_PORT% --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
     pause & exit /b 1
 )
 goto CHECK_HEALTH
@@ -191,7 +187,7 @@ echo    curl -X POST http://localhost:%APP_PORT%/api/simulate/fraud-case/all
 echo    curl http://localhost:%APP_PORT%/api/simulate/accuracy
 echo    curl http://localhost:%APP_PORT%/api/fraud/summary
 echo.
-echo  %YELLOW%The server is running in a separate window. Close that window to stop.%RESET%
+echo  %YELLOW%The server is running in the background. Press Ctrl+C to stop.%RESET%
 echo.
 pause
 goto :EOF
