@@ -52,8 +52,6 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/",
                     "/index.html",
-                    "/dashboard.html",
-                    "/*.html",
                     "/css/**",
                     "/js/**",
                     "/images/**",

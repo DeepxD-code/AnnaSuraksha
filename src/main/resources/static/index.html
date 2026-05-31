@@ -314,8 +314,22 @@
             roles: data.data.roles,
             stateCode: data.data.stateCode
           }));
-          btnLabel.textContent = 'Redirecting...';
-          setTimeout(() => window.location.href = '/dashboard.html', 500);
+          btnLabel.textContent = 'Loading...';
+          try {
+            const dashRes = await fetch('/dashboard.html', {
+              headers: { 'Authorization': 'Bearer ' + data.data.token }
+            });
+            if (dashRes.ok) {
+              const html = await dashRes.text();
+              document.open();
+              document.write(html);
+              document.close();
+            } else {
+              window.location.href = '/dashboard.html';
+            }
+          } catch {
+            window.location.href = '/dashboard.html';
+          }
         } else {
           throw new Error(data.error || 'Login failed');
         }
@@ -329,9 +343,23 @@
     });
 
     // Redirect if already logged in
-    if (localStorage.getItem('anna_token')) {
-      window.location.href = '/dashboard.html';
-    }
+    (async () => {
+      const token = localStorage.getItem('anna_token');
+      if (token) {
+        try {
+          const r = await fetch('/dashboard.html', { headers: { 'Authorization': 'Bearer ' + token } });
+          if (r.ok) {
+            const html = await r.text();
+            document.open();
+            document.write(html);
+            document.close();
+            return;
+          }
+        } catch {}
+        localStorage.removeItem('anna_token');
+        localStorage.removeItem('anna_user');
+      }
+    })();
   </script>
 </body>
 </html>
