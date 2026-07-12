@@ -24,6 +24,11 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final SupplyChainService    supplyChainSvc;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    private static final String DEFAULT_ADMIN_PW   = "Admin@123";
+    private static final String DEFAULT_OFFICER_PW = "Officer@123";
+    private static final String DEFAULT_AUDIT_PW    = "Audit@123";
+    private static final String DEFAULT_FPS_PW      = "Fps@123";
+
     @Value("${annasuraksha.seed.demo-data:true}")
     private boolean seedEnabled;
 
@@ -66,10 +71,10 @@ public class DemoDataSeeder implements CommandLineRunner {
     private void seedUsers() {
         if (userRepo.count() > 0) return;
 
-        String adminPw   = System.getenv().getOrDefault("DEMO_ADMIN_PW", randomPassword());
-        String officerPw = System.getenv().getOrDefault("DEMO_OFFICER_PW", randomPassword());
-        String auditPw   = System.getenv().getOrDefault("DEMO_AUDIT_PW", randomPassword());
-        String fpsPw     = System.getenv().getOrDefault("DEMO_FPS_PW", randomPassword());
+        String adminPw   = System.getenv().getOrDefault("DEMO_ADMIN_PW", DEFAULT_ADMIN_PW);
+        String officerPw = System.getenv().getOrDefault("DEMO_OFFICER_PW", DEFAULT_OFFICER_PW);
+        String auditPw   = System.getenv().getOrDefault("DEMO_AUDIT_PW", DEFAULT_AUDIT_PW);
+        String fpsPw     = System.getenv().getOrDefault("DEMO_FPS_PW", DEFAULT_FPS_PW);
 
         userRepo.saveAll(List.of(
             buildUser("admin@annasuraksha.gov.in",   adminPw,   List.of("ROLE_ADMIN"),        null,   "System Admin"),
@@ -78,7 +83,7 @@ public class DemoDataSeeder implements CommandLineRunner {
             buildUser("fps@mh.gov.in",               fpsPw,     List.of("ROLE_FPS_OPERATOR"),   "MH",   "MH FPS Operator")
         ));
 
-        log.info("Demo users created. For reproducible demos set DEMO_ADMIN_PW / DEMO_OFFICER_PW / DEMO_AUDIT_PW / DEMO_FPS_PW env vars.");
+        log.info("Demo users created. Using fixed defaults unless overridden by DEMO_ADMIN_PW / DEMO_OFFICER_PW / DEMO_AUDIT_PW / DEMO_FPS_PW.");
     }
 
     private void seedBeneficiariesAndDeliveries() {
@@ -231,12 +236,6 @@ public class DemoDataSeeder implements CommandLineRunner {
             .active(true).build();
     }
 
-    private String randomPassword() {
-        var rng = new java.security.SecureRandom();
-        var bytes = new byte[12];
-        rng.nextBytes(bytes);
-        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DemoDataSeeder.class);
     public DemoDataSeeder(BeneficiaryRepository beneRepo, FpsDeliveryRepository fpsRepo, UserRepository userRepo,
                           BlockchainService blockchainSvc, GhostDetectionService ghostSvc,
