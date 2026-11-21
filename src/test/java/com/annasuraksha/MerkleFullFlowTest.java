@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@org.springframework.test.context.ActiveProfiles("dev")
 @SpringBootTest
 public class MerkleFullFlowTest {
 

@@ -8,6 +8,7 @@ SECRET=${1:-verysecret}
 EMAIL=${2:-admin@local}
 PORT=${3:-8081}
 
+export SPRING_PROFILES_ACTIVE=dev
 export SPRING_H2_CONSOLE_ENABLED=true
 export DEV_BOOTSTRAP_SECRET="$SECRET"
 

@@ -129,7 +129,7 @@ echo %BOLD%%CYAN%  :: [5/5] Launching AnnaSuraksha...%RESET%
 
 set SPRING_H2_CONSOLE_ENABLED=true
 set ANNASURAKSHA_SEED_DEMO=true
-set JWT_SECRET=ANNASURAKSHA_V5_JWT_SECRET_KEY_32CHARS_MIN
+set SPRING_PROFILES_ACTIVE=dev
 if not defined DEMO_ADMIN_PW set DEMO_ADMIN_PW=Admin@123
 if not defined DEMO_OFFICER_PW set DEMO_OFFICER_PW=Officer@123
 if not defined DEMO_AUDIT_PW set DEMO_AUDIT_PW=Audit@123
@@ -142,7 +142,7 @@ echo  %CYAN%│  Swagger UI: http://localhost:%APP_PORT%/swagger-ui.html        
 echo  %CYAN%└─────────────────────────────────────────────────────────┘%RESET%
 echo.
 
-start /b "" "%JAVA_EXE%" -jar "%APP_JAR%" --server.port=%APP_PORT% --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
+start /b "" "%JAVA_EXE%" -jar "%APP_JAR%" --server.port=%APP_PORT% --spring.profiles.active=dev --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
 
 :: ─── Wait for health ────────────────────────────────────────────────
 set WAIT_S=0
@@ -156,7 +156,7 @@ set /a WAIT_S+=2
 if %WAIT_S% GEQ 60 (
     echo  %RED%[X]%RESET% App did not start within 60 seconds.
     echo.
-    echo  %YELLOW%[^>]%RESET% Run manually: "%JAVA_EXE%" -jar "%APP_JAR%" --server.port=%APP_PORT% --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
+    echo  %YELLOW%[^>]%RESET% Run manually: "%JAVA_EXE%" -jar "%APP_JAR%" --server.port=%APP_PORT% --spring.profiles.active=dev --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
     pause & exit /b 1
 )
 goto CHECK_HEALTH

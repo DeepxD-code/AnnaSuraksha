@@ -40,6 +40,12 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> {
+                // Dev token minting exists only under the dev profile; deny it everywhere else
+                // (must precede the /api/auth/** permitAll below).
+                if (!env.acceptsProfiles(org.springframework.core.env.Profiles.of("dev"))) {
+                    auth.requestMatchers("/api/auth/dev-token").denyAll();
+                }
+
                 List<String> publicMatchers = new ArrayList<>(List.of(
                     "/api/auth/**",
                     "/api/transparency/**",

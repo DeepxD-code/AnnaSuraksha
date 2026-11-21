@@ -29,7 +29,7 @@ public class DemoDataSeeder implements CommandLineRunner {
     private static final String DEFAULT_AUDIT_PW    = "Audit@123";
     private static final String DEFAULT_FPS_PW      = "Fps@123";
 
-    @Value("${annasuraksha.seed.demo-data:true}")
+    @Value("${annasuraksha.seed.demo-data:false}")
     private boolean seedEnabled;
 
     private static final String[] ALL_STATES = {

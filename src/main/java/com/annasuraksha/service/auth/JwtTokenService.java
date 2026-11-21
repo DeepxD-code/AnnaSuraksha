@@ -2,7 +2,11 @@ package com.annasuraksha.service.auth;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -14,8 +18,29 @@ import java.util.List;
 @Service
 public class JwtTokenService {
 
-    @Value("${jwt.secret:ANNASURAKSHA_V5_JWT_SECRET_KEY_32CHARS_MIN}")
+    /** Well-known demo key that shipped in source; never acceptable outside the dev/demo profile. */
+    static final String KNOWN_DEFAULT_SECRET = "ANNASURAKSHA_V5_JWT_SECRET_KEY_32CHARS_MIN";
+
+    @Value("${jwt.secret:}")
     private String jwtSecret;
+
+    @Autowired
+    private Environment environment;
+
+    @PostConstruct
+    void validateSecret() {
+        if (environment.acceptsProfiles(Profiles.of("dev", "demo"))) {
+            if (jwtSecret == null || jwtSecret.isBlank()) jwtSecret = KNOWN_DEFAULT_SECRET;
+            return;
+        }
+        if (jwtSecret == null || jwtSecret.isBlank()
+                || KNOWN_DEFAULT_SECRET.equals(jwtSecret)
+                || jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException(
+                "JWT_SECRET must be set to a unique value of at least 32 characters "
+                + "(the built-in demo key is only allowed with the 'dev' or 'demo' Spring profile).");
+        }
+    }
 
     @Value("${jwt.expiry-minutes:480}")
     private int expiryMinutes;

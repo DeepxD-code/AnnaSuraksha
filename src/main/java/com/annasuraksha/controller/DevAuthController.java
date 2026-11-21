@@ -5,6 +5,7 @@ import com.annasuraksha.model.auth.User;
 import com.annasuraksha.service.auth.JwtTokenService;
 import com.annasuraksha.service.auth.UserService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
  * intentionally gated: it only operates when spring.h2.console.enabled=true and requires the
  * caller to be ADMIN or present a bootstrap secret header.
  */
+@Profile("dev")
 @RestController
 @RequestMapping("/api/auth")
 public class DevAuthController {

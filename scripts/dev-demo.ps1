@@ -6,6 +6,7 @@ Param(
 
 Write-Host "Starting app with SPRING_H2_CONSOLE_ENABLED=true and DEV_BOOTSTRAP_SECRET='$Secret'"
 
+$env:SPRING_PROFILES_ACTIVE = 'dev'
 $env:SPRING_H2_CONSOLE_ENABLED = 'true'
 $env:DEV_BOOTSTRAP_SECRET = $Secret
 

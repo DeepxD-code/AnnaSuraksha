@@ -28,7 +28,7 @@ AnnaSuraksha is a production-grade fraud intelligence platform for India's Publi
 - **Server port:** 8081 (default)
 - **Demo DB:** H2 in-memory (`jdbc:h2:mem:annasuraksha`)
 - **H2 console:** `/h2-console` (user: `sa`, pass: empty) — localhost-only, no JWT required in dev
-- **Demo seeding:** disabled by default; enable with `--annasuraksha.seed.demo-data=true`
+- **Demo seeding:** disabled by default; enable with `--spring.profiles.active=dev --annasuraksha.seed.demo-data=true`
 - **API docs:** `/swagger-ui.html` (OpenAPI 3.0)
 
 ---
@@ -46,7 +46,7 @@ set DEMO_FPS_PW=fps123
 mvn -DskipTests clean package
 
 # 3. Run with demo data
-java -jar target\annasuraksha-5.1.0.jar --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
+java -jar target\annasuraksha-5.1.0.jar --spring.profiles.active=dev --spring.h2.console.enabled=true --annasuraksha.seed.demo-data=true
 
 # 4. Open
 open http://localhost:8081
@@ -296,7 +296,7 @@ All endpoints are documented with request/response schemas and auth requirements
 
 - H2 console localhost-restricted and audit-logged (disabled by default)
 - Demo seeding disabled by default (enable via CLI flag only)
-- JWT secret and Groq API key use env vars with dev-only defaults
+- JWT secret (`JWT_SECRET`) is required outside the `dev`/`demo` profile; the app fails fast at startup if it is unset or the old built-in key. Groq API key uses an env var
 - Passwords auto-generated with SecureRandom; env var overridable for demos
 - BCrypt(12) for password hashing
 - H2ConsoleInterceptor records all access attempts in audit log
